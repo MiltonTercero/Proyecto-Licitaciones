@@ -12,22 +12,20 @@ import {
   Trophy,
   Clock,
   BadgeDollarSign,
-  XCircle,
-  FileEdit,
   ArrowRight,
   Building2,
   Calendar,
-  DollarSign,
-  PlusCircle,
   Loader2,
   HelpCircle,
-  Sparkles,
+  X,
+  Info,
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showLegendModal, setShowLegendModal] = useState(false);
 
   const fetchTenders = async () => {
     try {
@@ -74,11 +72,11 @@ export default function DashboardPage() {
     .reduce((sum, p) => sum + Number(p.amount), 0);
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col min-h-screen relative">
       <Navbar onRefresh={handleRefresh} isRefreshing={refreshing} />
 
-      <main className="p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6">
-        {/* Header Title */}
+      <main className="p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6 flex-1 pb-16">
+        {/* Header Title (Sin botones redundantes) */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
@@ -88,23 +86,13 @@ export default function DashboardPage() {
               Visión general del estado comercial, fechas límite y gestión de cobranza
             </p>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/licitaciones/nueva"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Crear Nueva Licitación</span>
-            </Link>
-          </div>
         </div>
 
-        {/* Banner de Licitaciones Próximas a Vencer (< 48h) + Disparador Cron */}
+        {/* Banner de Licitaciones Próximas a Vencer (< 48h) */}
         <UrgentTendersBanner tenders={tenders} onCronExecuted={fetchTenders} />
 
         {/* Grid de KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <KpiCard
             title="Licitaciones Activas"
             value={activeCount}
@@ -133,42 +121,6 @@ export default function DashboardPage() {
             icon={BadgeDollarSign}
             color="emerald"
           />
-        </div>
-
-        {/* Explicador Visual de Estados (HCI Accessibility) */}
-        <div className="p-4 bg-zinc-100/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
-          <div className="flex items-center gap-2 mb-2">
-            <HelpCircle className="w-4 h-4 text-blue-600" />
-            <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
-              Guía Visual del Ciclo de Licitación
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs">
-            <div className="p-2.5 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
-              <StatusBadge status="borrador" size="sm" />
-              <p className="text-[11px] text-zinc-500 mt-1">Crea la propuesta y añade ítems sin exceder presupuesto.</p>
-            </div>
-            <div className="p-2.5 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
-              <StatusBadge status="activa" size="sm" />
-              <p className="text-[11px] text-zinc-500 mt-1">Requiere adjunto. Notifica al cliente por Resend.</p>
-            </div>
-            <div className="p-2.5 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
-              <StatusBadge status="finalizada" size="sm" />
-              <p className="text-[11px] text-zinc-500 mt-1">Ganada y culminada la entrega técnica.</p>
-            </div>
-            <div className="p-2.5 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
-              <StatusBadge status="por_cobrar" size="sm" />
-              <p className="text-[11px] text-zinc-500 mt-1">Facturada. Permite registrar cobros y abonos.</p>
-            </div>
-            <div className="p-2.5 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
-              <StatusBadge status="cobrada" size="sm" />
-              <p className="text-[11px] text-zinc-500 mt-1">Transiciona automático al quedar saldo en $0.00.</p>
-            </div>
-            <div className="p-2.5 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
-              <StatusBadge status="perdida" size="sm" />
-              <p className="text-[11px] text-zinc-500 mt-1">Manual o automática si vence la fecha límite.</p>
-            </div>
-          </div>
         </div>
 
         {/* Tabla de Licitaciones Recientes */}
@@ -202,12 +154,9 @@ export default function DashboardPage() {
               <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                 No hay licitaciones registradas aún
               </p>
-              <Link
-                href="/licitaciones/nueva"
-                className="mt-3 inline-block px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
-              >
-                Crear Primera Licitación
-              </Link>
+              <p className="text-xs text-zinc-500 mt-1">
+                Utilice la opción "Nueva Licitación" en el menú lateral para comenzar.
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -305,7 +254,92 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Botón Discreto Inferior Izquierdo: "Ver leyenda de estados" */}
+        <div className="pt-2 flex justify-start">
+          <button
+            onClick={() => setShowLegendModal(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-xl text-xs font-medium transition-all shadow-2xs cursor-pointer"
+          >
+            <Info className="w-3.5 h-3.5 text-blue-600" />
+            <span>Ver leyenda de estados</span>
+          </button>
+        </div>
       </main>
+
+      {/* Modal de Leyenda de Estados (Oculta por defecto) */}
+      {showLegendModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-blue-600" />
+                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+                  Guía Visual del Ciclo de Licitación
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowLegendModal(false)}
+                className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-zinc-500">
+              Descripción detallada de cada una de las fases normativas del ciclo comercial y sus reglas de transición:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+              <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/60 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-1.5">
+                <StatusBadge status="borrador" size="sm" />
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  Fase de preparación. Se agregan ítems y cotización sin exceder el presupuesto máximo.
+                </p>
+              </div>
+              <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/60 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-1.5">
+                <StatusBadge status="activa" size="sm" />
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  Requiere adjuntar propuesta formal. Al activarse envía notificación automática con PDF al cliente vía Resend.
+                </p>
+              </div>
+              <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/60 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-1.5">
+                <StatusBadge status="finalizada" size="sm" />
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  Licitación adjudicada a la empresa con entrega comercial y técnica completada.
+                </p>
+              </div>
+              <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/60 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-1.5">
+                <StatusBadge status="por_cobrar" size="sm" />
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  Facturada formalmente. Permite registrar pagos y abonos contra el saldo pendiente.
+                </p>
+              </div>
+              <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/60 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-1.5">
+                <StatusBadge status="cobrada" size="sm" />
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  Transiciona automáticamente cuando el saldo pendiente llega a $0.00 tras los cobros.
+                </p>
+              </div>
+              <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/60 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-1.5">
+                <StatusBadge status="perdida" size="sm" />
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  Manual (no ganada) o automática (expirada por fecha límite mediante Vercel Cron).
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setShowLegendModal(false)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

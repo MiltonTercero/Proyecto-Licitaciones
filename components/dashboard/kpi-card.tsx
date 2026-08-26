@@ -28,22 +28,22 @@ export function KpiCard({
   };
 
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-xs hover:border-zinc-300 dark:hover:border-zinc-700 transition-all flex flex-col justify-between">
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 truncate">
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-7 shadow-sm hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700 transition-all flex flex-col justify-between min-h-[160px]">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 truncate">
           {title}
         </span>
-        <div className={`p-2 rounded-xl border ${colorStyles[color]} shrink-0`}>
-          <Icon className="w-5 h-5" />
+        <div className={`p-3 rounded-2xl border ${colorStyles[color]} shrink-0 shadow-2xs`}>
+          <Icon className="w-6 h-6" />
         </div>
       </div>
 
       <div>
-        <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+        <div className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-none">
           {value}
         </div>
         {subtitle && (
-          <p className="text-xs text-zinc-500 mt-1 flex items-center justify-between">
+          <p className="text-xs text-zinc-500 mt-2.5 flex items-center justify-between font-medium">
             <span>{subtitle}</span>
             {trend && <span className="font-semibold text-emerald-600">{trend}</span>}
           </p>

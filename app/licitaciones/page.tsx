@@ -94,14 +94,6 @@ export default function TendersListPage() {
               Catálogo centralizado de propuestas comerciales y estados de adjudicación
             </p>
           </div>
-
-          <Link
-            href="/licitaciones/nueva"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Crear Licitación</span>
-          </Link>
         </div>
 
         {/* Status Filter Tabs */}
