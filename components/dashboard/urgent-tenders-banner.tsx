@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Tender } from '@/lib/types/database';
 import {
   AlertTriangle,
   Clock,
   ArrowRight,
-  Building2,
+  X,
 } from 'lucide-react';
 
 interface UrgentTendersBannerProps {
@@ -15,9 +15,8 @@ interface UrgentTendersBannerProps {
   onCronExecuted?: () => void;
 }
 
-export function UrgentTendersBanner({
-  tenders,
-}: UrgentTendersBannerProps) {
+export function UrgentTendersBanner({ tenders }: UrgentTendersBannerProps) {
+  const [dismissed, setDismissed] = useState(false);
   const now = new Date();
 
   // Filtramos licitaciones activas que vencen en menos de 48 horas
@@ -28,73 +27,58 @@ export function UrgentTendersBanner({
     return diffHours <= 48;
   });
 
-  if (urgentTenders.length === 0) {
+  if (urgentTenders.length === 0 || dismissed) {
     return null;
   }
 
+  const firstUrgent = urgentTenders[0];
+  const deadline = new Date(firstUrgent.fecha_limite);
+  const diffHours = Math.max(0, Math.round((deadline.getTime() - now.getTime()) / (1000 * 60 * 60)));
+
   return (
-    <div className="w-full bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 border border-amber-300 dark:border-amber-700/60 rounded-2xl p-5 mb-6 shadow-xs">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-xs">
-            <AlertTriangle className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <span>Licitaciones Próximas a Vencer (&lt; 48 Horas)</span>
-              <span className="bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 text-xs px-2 py-0.5 rounded-full font-bold">
-                {urgentTenders.length} en riesgo
-              </span>
-            </h3>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              Estas licitaciones requieren seguimiento urgente antes de la fecha límite establecida.
-            </p>
-          </div>
+    <div
+      role="alert"
+      aria-live="polite"
+      className="w-full bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/70 rounded-2xl px-4 py-3 sm:py-2.5 shadow-xs transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900 dark:text-amber-200"
+    >
+      <div className="flex items-center gap-3 overflow-hidden flex-1">
+        <div className="p-2 bg-amber-500 text-white rounded-xl shadow-2xs shrink-0">
+          <AlertTriangle className="w-5 h-5" aria-hidden="true" />
+        </div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm">
+          <span className="font-bold">
+            {urgentTenders.length === 1
+              ? '1 licitación próxima a vencer:'
+              : `${urgentTenders.length} licitaciones próximas a vencer (<48h):`}
+          </span>
+          <span className="font-semibold text-amber-800 dark:text-amber-300 truncate max-w-xs sm:max-w-md">
+            {firstUrgent.code} - {firstUrgent.title}
+          </span>
+          <span className="inline-flex items-center gap-1 font-bold text-rose-600 dark:text-rose-400 bg-rose-100/80 dark:bg-rose-950/80 px-2 py-0.5 rounded-md text-xs shrink-0">
+            <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+            {diffHours > 0 ? `${diffHours}h restantes` : 'Vence hoy'}
+          </span>
         </div>
       </div>
 
-      {/* Lista de licitaciones urgentes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {urgentTenders.map((tender) => {
-          const deadline = new Date(tender.fecha_limite);
-          const diffHours = Math.max(
-            0,
-            (deadline.getTime() - now.getTime()) / (1000 * 60 * 60)
-          );
-
-          return (
-            <div
-              key={tender.id}
-              className="p-3.5 bg-white dark:bg-zinc-900 border border-amber-200 dark:border-amber-800/80 rounded-xl flex items-center justify-between shadow-xs hover:border-amber-400 transition-colors"
-            >
-              <div className="overflow-hidden pr-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
-                    {tender.code} • {tender.title}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-zinc-500">
-                  <span className="flex items-center gap-1 truncate">
-                    <Building2 className="w-3 h-3 text-zinc-400" />
-                    {tender.client?.name || 'Cliente'}
-                  </span>
-                  <span className="flex items-center gap-1 font-semibold text-rose-600 dark:text-rose-400 shrink-0">
-                    <Clock className="w-3 h-3" />
-                    {diffHours > 0 ? `${diffHours.toFixed(0)}h restantes` : 'Expirada (Vencida)'}
-                  </span>
-                </div>
-              </div>
-
-              <Link
-                href={`/licitaciones/${tender.id}`}
-                className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-300 hover:text-amber-900 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-3 py-1.5 rounded-lg shrink-0 transition-colors"
-              >
-                <span>Gestionar</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          );
-        })}
+      <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+        <Link
+          href={`/licitaciones/${firstUrgent.id}`}
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-colors shadow-2xs cursor-pointer"
+          aria-label={`Gestionar licitación urgente ${firstUrgent.code}`}
+        >
+          <span>Gestionar</span>
+          <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+        </Link>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          className="p-1.5 text-amber-700 dark:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-900/50 rounded-xl transition-colors cursor-pointer"
+          aria-label="Descartar aviso de licitaciones urgentes"
+          title="Descartar aviso"
+        >
+          <X className="w-4 h-4" aria-hidden="true" />
+        </button>
       </div>
     </div>
   );

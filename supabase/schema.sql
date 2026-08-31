@@ -23,24 +23,74 @@ END $$;
 DO $$ BEGIN
     CREATE TYPE user_role AS ENUM (
         'admin',
-        'user'
+        'gestor',
+        'visualizador'
     );
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- 3. TABLA DE PERFILES DE USUARIO (Extensión de auth.users)
+-- 3. TABLA DE ROLES
+CREATE TABLE IF NOT EXISTS roles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT UNIQUE NOT NULL, -- 'admin', 'gestor', 'visualizador'
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Insertar roles por defecto
+INSERT INTO roles (id, name, description)
+VALUES 
+    ('r0000001-0000-0000-0000-000000000001', 'admin', 'Acceso total y administración del sistema'),
+    ('r0000001-0000-0000-0000-000000000002', 'gestor', 'Gestión operativa de licitaciones y transiciones'),
+    ('r0000001-0000-0000-0000-000000000003', 'visualizador', 'Solo lectura de catálogos y licitaciones')
+ON CONFLICT (name) DO NOTHING;
+
+-- 4. TABLA DE USUARIOS DEL SISTEMA
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
+    full_name TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    last_login TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
+
+-- 5. TABLA DE LOGS DE AUDITORÍA
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_email TEXT,
+    action TEXT NOT NULL,
+    table_name TEXT,
+    record_id TEXT,
+    old_values JSONB,
+    new_values JSONB,
+    ip_address TEXT,
+    timestamp TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs (timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs (user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs (action);
+
+-- 6. TABLA DE PERFILES DE USUARIO (Extensión de auth.users / compatibilidad)
 CREATE TABLE IF NOT EXISTS profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT UNIQUE NOT NULL,
     full_name TEXT NOT NULL,
-    role user_role DEFAULT 'user'::user_role NOT NULL,
+    role user_role DEFAULT 'visualizador'::user_role NOT NULL,
     is_active BOOLEAN DEFAULT true NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- 4. TABLA DE CLIENTES (Empresas)
+-- 7. TABLA DE CLIENTES (Empresas)
 CREATE TABLE IF NOT EXISTS clients (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
@@ -49,13 +99,16 @@ CREATE TABLE IF NOT EXISTS clients (
     phone TEXT,
     address TEXT,
     contact_name TEXT,
-    created_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
-    updated_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- 5. TABLA DE PRODUCTOS (Catálogo maestro)
+CREATE INDEX IF NOT EXISTS idx_clients_name ON clients (name);
+CREATE INDEX IF NOT EXISTS idx_clients_email ON clients (email);
+
+-- 8. TABLA DE PRODUCTOS (Catálogo maestro)
 CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     code TEXT UNIQUE NOT NULL,
@@ -64,13 +117,16 @@ CREATE TABLE IF NOT EXISTS products (
     unit_price NUMERIC(12, 2) NOT NULL CHECK (unit_price >= 0),
     unit_measure TEXT DEFAULT 'UNIDAD' NOT NULL,
     is_active BOOLEAN DEFAULT true NOT NULL,
-    created_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
-    updated_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- 6. TABLA DE LICITACIONES
+CREATE INDEX IF NOT EXISTS idx_products_name ON products (name);
+CREATE INDEX IF NOT EXISTS idx_products_code ON products (code);
+
+-- 9. TABLA DE LICITACIONES
 CREATE TABLE IF NOT EXISTS tenders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     code TEXT UNIQUE NOT NULL, -- Ej: LIC-2026-001
@@ -85,14 +141,18 @@ CREATE TABLE IF NOT EXISTS tenders (
     proposal_file_name TEXT,
     proposal_file_size INTEGER,
     reminder_sent BOOLEAN DEFAULT false NOT NULL,
-    created_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
-    updated_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     CONSTRAINT check_total_presupuesto CHECK (total_estimado <= presupuesto_maximo)
 );
 
--- 7. TABLA DE PRODUCTOS EN LICITACIÓN (Relación N:M)
+CREATE INDEX IF NOT EXISTS idx_tenders_client_id ON tenders (client_id);
+CREATE INDEX IF NOT EXISTS idx_tenders_status ON tenders (status);
+CREATE INDEX IF NOT EXISTS idx_tenders_fecha_limite ON tenders (fecha_limite);
+
+-- 10. TABLA DE PRODUCTOS EN LICITACIÓN (Relación N:M)
 CREATE TABLE IF NOT EXISTS tender_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tender_id UUID NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
@@ -104,24 +164,24 @@ CREATE TABLE IF NOT EXISTS tender_items (
     UNIQUE (tender_id, product_id)
 );
 
--- 8. TABLA DE PAGOS (Para licitaciones en estado por_cobrar)
+-- 11. TABLA DE PAGOS (Para licitaciones en estado por_cobrar)
 CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tender_id UUID NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
     amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
     payment_date DATE DEFAULT CURRENT_DATE NOT NULL,
     reference TEXT,
-    registered_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    registered_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- 9. TABLA DE HISTORIAL DE TRANSICIONES (Auditoría de estados)
+-- 12. TABLA DE HISTORIAL DE TRANSICIONES (Auditoría de estados)
 CREATE TABLE IF NOT EXISTS tender_transitions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tender_id UUID NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
     previous_status TEXT NOT NULL,
     new_status TEXT NOT NULL,
-    user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     user_name TEXT DEFAULT 'Sistema / Cron' NOT NULL,
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
@@ -140,7 +200,6 @@ DECLARE
 BEGIN
     target_tender_id := COALESCE(NEW.tender_id, OLD.tender_id);
 
-    -- Verificar que la licitación permita modificación de productos
     SELECT status, presupuesto_maximo INTO current_status, max_budget
     FROM tenders
     WHERE id = target_tender_id;
@@ -149,7 +208,6 @@ BEGIN
         RAISE EXCEPTION 'No se permite agregar o quitar productos en licitaciones con estado %', current_status;
     END IF;
 
-    -- Calcular el nuevo total
     SELECT COALESCE(SUM(quantity * unit_price), 0.00)
     INTO calculated_total
     FROM tender_items
@@ -185,8 +243,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trigger_profiles_updated_at ON profiles;
-CREATE TRIGGER trigger_profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+DROP TRIGGER IF EXISTS trigger_users_updated_at ON users;
+CREATE TRIGGER trigger_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 DROP TRIGGER IF EXISTS trigger_clients_updated_at ON clients;
 CREATE TRIGGER trigger_clients_updated_at BEFORE UPDATE ON clients FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -196,44 +254,3 @@ CREATE TRIGGER trigger_products_updated_at BEFORE UPDATE ON products FOR EACH RO
 
 DROP TRIGGER IF EXISTS trigger_tenders_updated_at ON tenders;
 CREATE TRIGGER trigger_tenders_updated_at BEFORE UPDATE ON tenders FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
--- ==============================================================================
--- POLÍTICAS RLS (Row Level Security)
--- ==============================================================================
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tenders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tender_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tender_transitions ENABLE ROW LEVEL SECURITY;
-
--- Políticas de lectura para usuarios autenticados
-CREATE POLICY "Permitir lectura completa a usuarios autenticados" ON profiles FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Permitir lectura de clientes a usuarios autenticados" ON clients FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Permitir escritura de clientes a usuarios autenticados" ON clients FOR ALL TO authenticated USING (true);
-CREATE POLICY "Permitir lectura de productos a usuarios autenticados" ON products FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Permitir escritura de productos a usuarios autenticados" ON products FOR ALL TO authenticated USING (true);
-CREATE POLICY "Permitir lectura de licitaciones a usuarios autenticados" ON tenders FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Permitir escritura de licitaciones a usuarios autenticados" ON tenders FOR ALL TO authenticated USING (true);
-CREATE POLICY "Permitir lectura de items a usuarios autenticados" ON tender_items FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Permitir escritura de items a usuarios autenticados" ON tender_items FOR ALL TO authenticated USING (true);
-CREATE POLICY "Permitir lectura de pagos a usuarios autenticados" ON payments FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Permitir registro de pagos a usuarios autenticados" ON payments FOR ALL TO authenticated USING (true);
-CREATE POLICY "Permitir lectura de transiciones a usuarios autenticados" ON tender_transitions FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Permitir insercion de transiciones a usuarios autenticados" ON tender_transitions FOR INSERT TO authenticated WITH CHECK (true);
-
--- ==============================================================================
--- STORAGE BUCKET PARA PROPUESTAS FORMALES
--- ==============================================================================
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('proposals', 'proposals', true)
-ON CONFLICT (id) DO NOTHING;
-
-CREATE POLICY "Permitir subida de propuestas a usuarios autenticados"
-ON storage.objects FOR INSERT TO authenticated
-WITH CHECK (bucket_id = 'proposals');
-
-CREATE POLICY "Permitir lectura pública de propuestas"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'proposals');

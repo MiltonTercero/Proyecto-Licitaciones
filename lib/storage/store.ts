@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import {
   Client,
   Product,
@@ -6,10 +7,89 @@ import {
   Payment,
   TenderTransition,
   TenderStatus,
+  User,
+  Role,
+  AuditLog,
+  RoleType,
 } from '@/lib/types/database';
-import { createAdminSupabaseClient, isSupabaseConfigured } from '@/lib/supabase/admin';
 
-// Datos iniciales de demostración y respaldo
+// ROLES INICIALES
+const initialRoles: Role[] = [
+  {
+    id: 'r0000001-0000-0000-0000-000000000001',
+    name: 'admin',
+    description: 'Acceso total y administración del sistema',
+  },
+  {
+    id: 'r0000001-0000-0000-0000-000000000002',
+    name: 'gestor',
+    description: 'Gestión operativa de licitaciones y transiciones',
+  },
+  {
+    id: 'r0000001-0000-0000-0000-000000000003',
+    name: 'visualizador',
+    description: 'Solo lectura de catálogos y licitaciones',
+  },
+];
+
+// Hash bcrypt precalculado para "Admin123!", "Gestor123!", "Visual123!" con 12 rondas
+const ADMIN_HASH = bcrypt.hashSync('Admin123!', 12);
+const GESTOR_HASH = bcrypt.hashSync('Gestor123!', 12);
+const VISUAL_HASH = bcrypt.hashSync('Visual123!', 12);
+
+// USUARIOS INICIALES
+const initialUsers: User[] = [
+  {
+    id: 'u0000001-0000-0000-0000-000000000001',
+    email: 'admin@csc.com',
+    password_hash: ADMIN_HASH,
+    role_id: 'r0000001-0000-0000-0000-000000000001',
+    role: 'admin',
+    full_name: 'Admin Comercial',
+    is_active: true,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
+    last_login: new Date().toISOString(),
+  },
+  {
+    id: 'u0000001-0000-0000-0000-000000000002',
+    email: 'admin@test.com',
+    password_hash: ADMIN_HASH,
+    role_id: 'r0000001-0000-0000-0000-000000000001',
+    role: 'admin',
+    full_name: 'Administrador de Pruebas',
+    is_active: true,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+    last_login: null,
+  },
+  {
+    id: 'u0000001-0000-0000-0000-000000000003',
+    email: 'gestor@csc.com',
+    password_hash: GESTOR_HASH,
+    role_id: 'r0000001-0000-0000-0000-000000000002',
+    role: 'gestor',
+    full_name: 'Carlos Mendoza Gestor',
+    is_active: true,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+    last_login: null,
+  },
+  {
+    id: 'u0000001-0000-0000-0000-000000000004',
+    email: 'visualizador@csc.com',
+    password_hash: VISUAL_HASH,
+    role_id: 'r0000001-0000-0000-0000-000000000003',
+    role: 'visualizador',
+    full_name: 'Ana Rivas Visualizadora',
+    is_active: true,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+    last_login: null,
+  },
+];
+
+// CLIENTES INICIALES
 const initialClients: Client[] = [
   {
     id: 'a0000001-0000-0000-0000-000000000001',
@@ -57,6 +137,7 @@ const initialClients: Client[] = [
   },
 ];
 
+// PRODUCTOS INICIALES
 const initialProducts: Product[] = [
   {
     id: 'b0000001-0000-0000-0000-000000000001',
@@ -126,9 +207,7 @@ const initialProducts: Product[] = [
   },
 ];
 
-let memoryClients: Client[] = [...initialClients];
-let memoryProducts: Product[] = [...initialProducts];
-
+// LICITACIONES INICIALES
 let memoryTenders: Tender[] = [
   {
     id: 'c0000001-0000-0000-0000-000000000001',
@@ -156,7 +235,7 @@ let memoryTenders: Tender[] = [
     status: 'activa',
     presupuesto_maximo: 25000.0,
     total_estimado: 16100.0,
-    fecha_limite: new Date(Date.now() + 1000 * 60 * 60 * 30).toISOString(), // ~30 horas restante (Próxima a vencer < 48h)
+    fecha_limite: new Date(Date.now() + 1000 * 60 * 60 * 30).toISOString(),
     proposal_file_url: 'https://raw.githubusercontent.com/sample/propuesta-hospital.pdf',
     proposal_file_name: 'Propuesta_Hospital_Redes_2026.pdf',
     proposal_file_size: 1890450,
@@ -234,8 +313,13 @@ let memoryTenders: Tender[] = [
   },
 ];
 
+let memoryClients: Client[] = [...initialClients];
+let memoryProducts: Product[] = [...initialProducts];
+let memoryUsers: User[] = [...initialUsers];
+let memoryRoles: Role[] = [...initialRoles];
+let memoryAuditLogs: AuditLog[] = [];
+
 let memoryItems: TenderItem[] = [
-  // LIC-2026-001
   {
     id: 'i-001',
     tender_id: 'c0000001-0000-0000-0000-000000000001',
@@ -254,8 +338,6 @@ let memoryItems: TenderItem[] = [
     subtotal: 2500.0,
     created_at: new Date().toISOString(),
   },
-
-  // LIC-2026-002
   {
     id: 'i-003',
     tender_id: 'c0000001-0000-0000-0000-000000000002',
@@ -274,8 +356,6 @@ let memoryItems: TenderItem[] = [
     subtotal: 2500.0,
     created_at: new Date().toISOString(),
   },
-
-  // LIC-2026-003
   {
     id: 'i-005',
     tender_id: 'c0000001-0000-0000-0000-000000000003',
@@ -285,8 +365,6 @@ let memoryItems: TenderItem[] = [
     subtotal: 14500.0,
     created_at: new Date().toISOString(),
   },
-
-  // LIC-2026-004
   {
     id: 'i-006',
     tender_id: 'c0000001-0000-0000-0000-000000000004',
@@ -305,8 +383,6 @@ let memoryItems: TenderItem[] = [
     subtotal: 2500.0,
     created_at: new Date().toISOString(),
   },
-
-  // LIC-2026-005
   {
     id: 'i-008',
     tender_id: 'c0000001-0000-0000-0000-000000000005',
@@ -316,8 +392,6 @@ let memoryItems: TenderItem[] = [
     subtotal: 5000.0,
     created_at: new Date().toISOString(),
   },
-
-  // LIC-2026-006
   {
     id: 'i-009',
     tender_id: 'c0000001-0000-0000-0000-000000000006',
@@ -457,7 +531,6 @@ let memoryTransitions: TenderTransition[] = [
   },
 ];
 
-// Reglas de transiciones válidas según especificación
 export const VALID_TRANSITIONS: Record<string, TenderStatus[]> = {
   borrador: ['activa'],
   activa: ['finalizada', 'perdida'],
@@ -468,9 +541,201 @@ export const VALID_TRANSITIONS: Record<string, TenderStatus[]> = {
 };
 
 export const dataStore = {
-  // CLIENTES
+  // ==========================================
+  // ROLES
+  // ==========================================
+  async getRoles(): Promise<Role[]> {
+    return memoryRoles;
+  },
+
+  // ==========================================
+  // USUARIOS (RBAC)
+  // ==========================================
+  async getUsers(): Promise<User[]> {
+    return memoryUsers.map((u) => {
+      const role = memoryRoles.find((r) => r.id === u.role_id)?.name || u.role;
+      return { ...u, role };
+    });
+  },
+
+  async getUserById(id: string): Promise<User | null> {
+    const user = memoryUsers.find((u) => u.id === id);
+    if (!user) return null;
+    const role = memoryRoles.find((r) => r.id === user.role_id)?.name || user.role;
+    return { ...user, role };
+  },
+
+  async getUserByEmail(email: string): Promise<User | null> {
+    // Consulta parametrizada exacta insensible a mayúsculas
+    const normalized = email.trim().toLowerCase();
+    const user = memoryUsers.find((u) => u.email.toLowerCase() === normalized);
+    if (!user) return null;
+    const role = memoryRoles.find((r) => r.id === user.role_id)?.name || user.role;
+    return { ...user, role };
+  },
+
+  async createUser(userData: {
+    email: string;
+    password_hash: string;
+    role: RoleType;
+    full_name: string;
+  }): Promise<User> {
+    const normalized = userData.email.trim().toLowerCase();
+    const existing = memoryUsers.find((u) => u.email.toLowerCase() === normalized);
+    if (existing) {
+      throw new Error('El correo electrónico ya se encuentra registrado');
+    }
+
+    const roleObj = memoryRoles.find((r) => r.name === userData.role) || memoryRoles[0];
+
+    const newUser: User = {
+      id: crypto.randomUUID(),
+      email: normalized,
+      password_hash: userData.password_hash,
+      role_id: roleObj.id,
+      role: userData.role,
+      full_name: userData.full_name,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      last_login: null,
+    };
+
+    memoryUsers.unshift(newUser);
+    return newUser;
+  },
+
+  async updateUser(
+    id: string,
+    userData: {
+      role?: RoleType;
+      full_name?: string;
+      password_hash?: string;
+      is_active?: boolean;
+    }
+  ): Promise<User> {
+    const index = memoryUsers.findIndex((u) => u.id === id);
+    if (index === -1) throw new Error('Usuario no encontrado');
+
+    const currentUser = memoryUsers[index];
+    let roleId = currentUser.role_id;
+    let role = currentUser.role;
+
+    if (userData.role) {
+      const roleObj = memoryRoles.find((r) => r.name === userData.role);
+      if (roleObj) {
+        roleId = roleObj.id;
+        role = userData.role;
+      }
+    }
+
+    memoryUsers[index] = {
+      ...currentUser,
+      ...(userData.full_name ? { full_name: userData.full_name } : {}),
+      ...(userData.password_hash ? { password_hash: userData.password_hash } : {}),
+      ...(userData.is_active !== undefined ? { is_active: userData.is_active } : {}),
+      role_id: roleId,
+      role,
+      updated_at: new Date().toISOString(),
+    };
+
+    return memoryUsers[index];
+  },
+
+  async deleteUser(id: string): Promise<boolean> {
+    const index = memoryUsers.findIndex((u) => u.id === id);
+    if (index === -1) throw new Error('Usuario no encontrado');
+    memoryUsers.splice(index, 1);
+    return true;
+  },
+
+  async updateLastLogin(id: string): Promise<void> {
+    const index = memoryUsers.findIndex((u) => u.id === id);
+    if (index !== -1) {
+      memoryUsers[index].last_login = new Date().toISOString();
+    }
+  },
+
+  // ==========================================
+  // AUDIT LOGS
+  // ==========================================
+  async createAuditLog(log: AuditLog): Promise<AuditLog> {
+    memoryAuditLogs.unshift(log);
+    return log;
+  },
+
+  async getAuditLogs(filters?: {
+    userId?: string;
+    action?: string;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+  }): Promise<AuditLog[]> {
+    let logs = [...memoryAuditLogs];
+
+    if (filters?.userId) {
+      logs = logs.filter((l) => l.user_id === filters.userId || l.user_email === filters.userId);
+    }
+    if (filters?.action) {
+      logs = logs.filter((l) => l.action.toLowerCase().includes(filters.action!.toLowerCase()));
+    }
+    if (filters?.startDate) {
+      const start = new Date(filters.startDate).getTime();
+      logs = logs.filter((l) => new Date(l.timestamp).getTime() >= start);
+    }
+    if (filters?.endDate) {
+      const end = new Date(filters.endDate).getTime();
+      logs = logs.filter((l) => new Date(l.timestamp).getTime() <= end);
+    }
+
+    if (filters?.limit) {
+      logs = logs.slice(0, filters.limit);
+    }
+
+    return logs;
+  },
+
+  // ==========================================
+  // CLIENTES (Con Búsqueda Parametrizada e Índices)
+  // ==========================================
   async getClients(): Promise<Client[]> {
     return memoryClients;
+  },
+
+  async searchClients(
+    query: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ data: Client[]; total: number; page: number; totalPages: number }> {
+    const startTime = performance.now();
+    const cleanQuery = (query || '').trim().toLowerCase();
+    const safeLimit = Math.min(50, Math.max(1, limit));
+    const safePage = Math.max(1, page);
+
+    let filtered: Client[];
+    if (!cleanQuery) {
+      filtered = memoryClients;
+    } else {
+      // Búsqueda parametrizada segura simulando índice por name y email
+      filtered = memoryClients.filter(
+        (c) =>
+          c.name.toLowerCase().includes(cleanQuery) ||
+          c.email.toLowerCase().includes(cleanQuery) ||
+          c.tax_id.toLowerCase().includes(cleanQuery)
+      );
+    }
+
+    const total = filtered.length;
+    const totalPages = Math.ceil(total / safeLimit) || 1;
+    const offset = (safePage - 1) * safeLimit;
+    const data = filtered.slice(offset, offset + safeLimit);
+
+    const elapsedMs = performance.now() - startTime;
+    console.log(
+      `[PERF] Client search query="${cleanQuery}" page=${safePage} limit=${safeLimit} total=${total} (${elapsedMs.toFixed(2)}ms)`
+    );
+
+    return { data, total, page: safePage, totalPages };
   },
 
   async getClientById(id: string): Promise<Client | null> {
@@ -486,6 +751,8 @@ export const dataStore = {
       phone: clientData.phone || '',
       address: clientData.address || '',
       contact_name: clientData.contact_name || '',
+      created_by: clientData.created_by || null,
+      updated_by: clientData.updated_by || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -513,7 +780,9 @@ export const dataStore = {
     return true;
   },
 
+  // ==========================================
   // PRODUCTOS
+  // ==========================================
   async getProducts(): Promise<Product[]> {
     return memoryProducts;
   },
@@ -531,6 +800,8 @@ export const dataStore = {
       unit_price: Number(productData.unit_price) || 0,
       unit_measure: productData.unit_measure || 'UNIDAD',
       is_active: productData.is_active !== undefined ? productData.is_active : true,
+      created_by: productData.created_by || null,
+      updated_by: productData.updated_by || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -544,7 +815,10 @@ export const dataStore = {
     memoryProducts[index] = {
       ...memoryProducts[index],
       ...productData,
-      unit_price: productData.unit_price !== undefined ? Number(productData.unit_price) : memoryProducts[index].unit_price,
+      unit_price:
+        productData.unit_price !== undefined
+          ? Number(productData.unit_price)
+          : memoryProducts[index].unit_price,
       updated_at: new Date().toISOString(),
     };
     return memoryProducts[index];
@@ -559,7 +833,9 @@ export const dataStore = {
     return true;
   },
 
+  // ==========================================
   // LICITACIONES
+  // ==========================================
   async getTenders(): Promise<Tender[]> {
     return memoryTenders.map((tender) => this.populateTender(tender));
   },
@@ -623,7 +899,6 @@ export const dataStore = {
 
     memoryTenders.unshift(newTender);
 
-    // Registro en historial
     await this.logTransition(
       newTender.id,
       'none',
@@ -650,7 +925,9 @@ export const dataStore = {
     return this.populateTender(memoryTenders[index]);
   },
 
+  // ==========================================
   // PRODUCTOS EN LICITACIÓN
+  // ==========================================
   async addItemToTender(
     tenderId: string,
     productId: string,
@@ -659,7 +936,6 @@ export const dataStore = {
     const tender = memoryTenders.find((t) => t.id === tenderId);
     if (!tender) throw new Error('Licitación no encontrada');
 
-    // Regla de Negocio: No se permite agregar o quitar productos en finalizada, por_cobrar, cobrada o perdida
     if (['finalizada', 'por_cobrar', 'cobrada', 'perdida'].includes(tender.status)) {
       throw new Error(`No se permite modificar productos en licitaciones con estado "${tender.status}"`);
     }
@@ -674,7 +950,6 @@ export const dataStore = {
 
     const projectedTotal = currentTotal + itemSubtotal;
 
-    // Regla de Negocio: El total de productos no debe superar su presupuesto máximo
     if (projectedTotal > tender.presupuesto_maximo) {
       throw new Error(
         `El monto total proyectado ($${projectedTotal.toFixed(2)}) supera el presupuesto máximo permitido ($${Number(tender.presupuesto_maximo).toFixed(2)})`
@@ -692,7 +967,6 @@ export const dataStore = {
       product,
     };
 
-    // Si ya existe el producto, actualizamos cantidad
     const existingIndex = memoryItems.findIndex(
       (i) => i.tender_id === tenderId && i.product_id === productId
     );
@@ -733,7 +1007,6 @@ export const dataStore = {
 
     memoryItems.splice(itemIndex, 1);
 
-    // Recalcular total
     const newTotal = memoryItems
       .filter((i) => i.tender_id === tenderId)
       .reduce((sum, i) => sum + i.subtotal, 0);
@@ -744,7 +1017,9 @@ export const dataStore = {
     return this.populateTender(tender);
   },
 
+  // ==========================================
   // TRANSICIONES DE ESTADO
+  // ==========================================
   async transitionTenderStatus(
     tenderId: string,
     newStatus: TenderStatus,
@@ -757,7 +1032,6 @@ export const dataStore = {
     const tender = memoryTenders[index];
     const previousStatus = tender.status;
 
-    // 1. Validar transición válida
     const allowed = VALID_TRANSITIONS[previousStatus] || [];
     if (!allowed.includes(newStatus)) {
       throw new Error(
@@ -765,7 +1039,6 @@ export const dataStore = {
       );
     }
 
-    // 2. Regla de Negocio 3: borrador -> activa requiere documento de propuesta adjunto
     if (previousStatus === 'borrador' && newStatus === 'activa') {
       if (!tender.proposal_file_url) {
         throw new Error(
@@ -774,17 +1047,17 @@ export const dataStore = {
       }
     }
 
-    // Aplicar cambio
     tender.status = newStatus;
     tender.updated_at = new Date().toISOString();
 
-    // Registrar en auditoría
     await this.logTransition(tenderId, previousStatus, newStatus, userName, notes);
 
     return this.populateTender(tender);
   },
 
+  // ==========================================
   // PAGOS
+  // ==========================================
   async registerPayment(
     tenderId: string,
     amount: number,
@@ -794,23 +1067,22 @@ export const dataStore = {
     const tender = memoryTenders.find((t) => t.id === tenderId);
     if (!tender) throw new Error('Licitación no encontrada');
 
-    // Regla de Negocio: Solo en estado por_cobrar se pueden registrar pagos
     if (tender.status !== 'por_cobrar') {
-      throw new Error(`Solo se pueden registrar pagos en licitaciones en estado "por_cobrar" (Estado actual: "${tender.status}")`);
+      throw new Error(
+        `Solo se pueden registrar pagos en licitaciones en estado "por_cobrar" (Estado actual: "${tender.status}")`
+      );
     }
 
     if (amount <= 0) {
       throw new Error('El monto del pago debe ser mayor a 0');
     }
 
-    // Calcular saldo actual
     const previousPaymentsSum = memoryPayments
       .filter((p) => p.tender_id === tenderId)
       .reduce((sum, p) => sum + Number(p.amount), 0);
 
     const pendingBalance = tender.total_estimado - previousPaymentsSum;
 
-    // Regla de Negocio: No se puede registrar un pago mayor al saldo pendiente
     if (amount > pendingBalance + 0.01) {
       throw new Error(
         `El monto ($${amount.toFixed(2)}) supera el saldo pendiente de cobro ($${pendingBalance.toFixed(2)})`
@@ -828,12 +1100,10 @@ export const dataStore = {
 
     memoryPayments.push(newPayment);
 
-    // Calcular nuevo saldo tras este pago
     const newTotalPaid = previousPaymentsSum + amount;
     const newRemainingBalance = tender.total_estimado - newTotalPaid;
 
     let autoCobrada = false;
-    // Regla de Negocio: Al llegar el saldo a cero, pasa automáticamente a cobrada
     if (newRemainingBalance <= 0.01) {
       tender.status = 'cobrada';
       tender.updated_at = new Date().toISOString();
@@ -855,7 +1125,9 @@ export const dataStore = {
     };
   },
 
-  // AUDITORÍA
+  // ==========================================
+  // AUDITORÍA DE TRANSICIONES
+  // ==========================================
   async logTransition(
     tenderId: string,
     previousStatus: TenderStatus | 'none',

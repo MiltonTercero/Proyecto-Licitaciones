@@ -1,5 +1,25 @@
 export type TenderStatus = 'borrador' | 'activa' | 'finalizada' | 'por_cobrar' | 'cobrada' | 'perdida';
-export type UserRole = 'admin' | 'user';
+export type RoleType = 'admin' | 'gestor' | 'visualizador';
+export type UserRole = 'admin' | 'gestor' | 'visualizador';
+
+export interface Role {
+  id: string;
+  name: RoleType;
+  description?: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  password_hash: string;
+  role_id: string;
+  role: RoleType;
+  full_name?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_login?: string | null;
+}
 
 export interface Profile {
   id: string;
@@ -9,6 +29,19 @@ export interface Profile {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface AuditLog {
+  id: string;
+  user_id?: string | null;
+  user_email?: string | null;
+  action: string;
+  table_name?: string | null;
+  record_id?: string | null;
+  old_values?: any;
+  new_values?: any;
+  ip_address?: string | null;
+  timestamp: string;
 }
 
 export interface Client {
