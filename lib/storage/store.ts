@@ -600,10 +600,9 @@ export const dataStore = {
 
     if (existingItem) {
       const newQty = Number(existingItem.quantity) + quantity;
-      const newSub = newQty * Number(product.unit_price);
       const { data, error } = await supabase
         .from('tender_items')
-        .update({ quantity: newQty, subtotal: newSub })
+        .update({ quantity: newQty })
         .eq('id', existingItem.id)
         .select('*, product:products(*)')
         .single();
@@ -617,7 +616,6 @@ export const dataStore = {
           product_id: productId,
           quantity,
           unit_price: product.unit_price,
-          subtotal: itemSubtotal,
         })
         .select('*, product:products(*)')
         .single();

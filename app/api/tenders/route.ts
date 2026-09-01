@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, client_id, presupuesto_maximo, fecha_limite, description, code } = body;
+    const { title, client_id, presupuesto_maximo, fecha_limite, description, code, items } = body;
 
     if (!title || !client_id || !presupuesto_maximo || !fecha_limite) {
       return NextResponse.json(
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const newTender = await dataStore.createTender({
+    let tender = await dataStore.createTender({
       title,
       client_id,
       presupuesto_maximo: Number(presupuesto_maximo),
@@ -64,7 +64,16 @@ export async function POST(request: Request) {
       code,
     });
 
-    return NextResponse.json({ success: true, data: newTender }, { status: 201 });
+    if (Array.isArray(items) && items.length > 0) {
+      for (const item of items) {
+        if (item.product_id && Number(item.quantity) > 0) {
+          const res = await dataStore.addItemToTender(tender.id, item.product_id, Number(item.quantity));
+          tender = res.tender;
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, data: tender }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });
   }

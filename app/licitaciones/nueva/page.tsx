@@ -269,6 +269,16 @@ export default function NewTenderWizardPage() {
     setSubmitting(true);
 
     try {
+      if (sendImmediately && !proposalFile) {
+        throw new Error('Para enviar formalmente al cliente debe adjuntar el archivo de propuesta.');
+      }
+
+      // 1. Crear la licitación junto con sus productos de forma atómica
+      const itemsPayload = selectedItems.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+      }));
+
       const res = await fetch('/api/tenders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -278,41 +288,41 @@ export default function NewTenderWizardPage() {
           client_id: clientId,
           presupuesto_maximo: maxBudgetNum,
           fecha_limite: new Date(fechaLimite).toISOString(),
+          items: itemsPayload,
         }),
       });
 
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Error al crear la licitación');
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Error al crear la licitación');
+      }
       const createdTender = data.data;
 
-      for (const item of selectedItems) {
-        await fetch(`/api/tenders/${createdTender.id}/items`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ product_id: item.productId, quantity: item.quantity }),
-        });
-      }
-
+      // 2. Subir documento de propuesta si existe
       if (proposalFile) {
         const formData = new FormData();
         formData.append('file', proposalFile);
-        await fetch(`/api/tenders/${createdTender.id}/upload`, {
+        const uploadRes = await fetch(`/api/tenders/${createdTender.id}/upload`, {
           method: 'POST',
           body: formData,
         });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok || !uploadData.success) {
+          throw new Error(uploadData.error || 'Error al subir documento de propuesta');
+        }
       }
 
+      // 3. Enviar inmediatamente al cliente si fue solicitado
       if (sendImmediately) {
-        if (!proposalFile)
-          throw new Error('Para enviar formalmente al cliente debe adjuntar el archivo de propuesta.');
         const sendRes = await fetch(`/api/tenders/${createdTender.id}/send`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userName: 'Admin Comercial' }),
         });
         const sendData = await sendRes.json();
-        if (!sendRes.ok || !sendData.success)
-          throw new Error(sendData.error || 'Error al enviar por correo');
+        if (!sendRes.ok || !sendData.success) {
+          throw new Error(sendData.error || 'Error al enviar por correo al cliente');
+        }
       }
 
       router.push(`/licitaciones/${createdTender.id}`);

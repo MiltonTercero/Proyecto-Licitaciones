@@ -22,12 +22,8 @@ export function proxy(request: NextRequest) {
   const isCronRoute = pathname.startsWith('/api/cron/');
   const isLoginPage = pathname === '/login';
 
-  // Si el usuario ya tiene sesión y va a /login → redirigir al panel
+  // Si visita /login → siempre permitir que cargue la página
   if (isLoginPage) {
-    const token = request.cookies.get('csc_access_token')?.value;
-    if (token) {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
     return NextResponse.next();
   }
 

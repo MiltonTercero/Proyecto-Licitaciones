@@ -29,27 +29,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // ── 1. Restaurar sesión desde localStorage al montar ──────────────────────
+  // ── 1. Restaurar sesión al montar (sessionStorage / /api/auth/me) ─────────
   useEffect(() => {
-    try {
-      const savedToken = localStorage.getItem('csc_access_token');
-      const savedUser  = localStorage.getItem('csc_user');
+    let isMounted = true;
 
-      if (savedToken && savedUser) {
-        setToken(savedToken);
-        setUser(JSON.parse(savedUser));
-      } else {
-        setUser(null);
-        setToken(null);
+    async function checkSession() {
+      try {
+        const savedToken = sessionStorage.getItem('csc_access_token') || localStorage.getItem('csc_access_token');
+        const savedUser  = sessionStorage.getItem('csc_user') || localStorage.getItem('csc_user');
+
+        if (savedToken && savedUser) {
+          if (isMounted) {
+            setToken(savedToken);
+            setUser(JSON.parse(savedUser));
+            setLoading(false);
+          }
+          return;
+        }
+
+        // Verificar si existe sesión válida por cookie HttpOnly
+        const meRes = await fetch('/api/auth/me');
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          if (meData.success && meData.data && isMounted) {
+            setUser(meData.data);
+            sessionStorage.setItem('csc_user', JSON.stringify(meData.data));
+            setLoading(false);
+            return;
+          }
+        }
+
+        if (isMounted) {
+          setUser(null);
+          setToken(null);
+        }
+      } catch {
+        if (isMounted) {
+          setUser(null);
+          setToken(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    } catch {
-      localStorage.removeItem('csc_access_token');
-      localStorage.removeItem('csc_user');
-      setUser(null);
-      setToken(null);
-    } finally {
-      setLoading(false);
     }
+
+    checkSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // ── 2. Guardia de redirección (después de que cargue) ─────────────────────
@@ -98,8 +128,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setToken(accessToken);
       setUser(authUser);
-      localStorage.setItem('csc_access_token', accessToken);
-      localStorage.setItem('csc_user', JSON.stringify(authUser));
+      sessionStorage.setItem('csc_access_token', accessToken);
+      sessionStorage.setItem('csc_user', JSON.stringify(authUser));
+      // Limpiar remanentes de localStorage
+      localStorage.removeItem('csc_access_token');
+      localStorage.removeItem('csc_user');
 
       return { success: true };
     } catch {
@@ -122,6 +155,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setUser(null);
       setToken(null);
+      sessionStorage.removeItem('csc_access_token');
+      sessionStorage.removeItem('csc_user');
       localStorage.removeItem('csc_access_token');
       localStorage.removeItem('csc_user');
       router.replace('/login');
