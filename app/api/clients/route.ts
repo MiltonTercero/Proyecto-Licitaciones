@@ -20,8 +20,8 @@ export async function POST(req: Request) {
   const ip = getClientIp(req);
 
   try {
-    // RBAC: Solo Admin puede crear clientes
-    const auth = requireAuth(req, ['admin']);
+    // RBAC: Admin y Gestor pueden crear clientes
+    const auth = requireAuth(req, ['admin', 'gestor']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const body = await req.json();

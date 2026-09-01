@@ -30,8 +30,8 @@ export async function PUT(
   const ip = getClientIp(request);
 
   try {
-    // RBAC: Solo Admin puede editar clientes
-    const auth = requireAuth(request, ['admin']);
+    // RBAC: Admin y Gestor pueden editar clientes
+    const auth = requireAuth(request, ['admin', 'gestor']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const { id } = await props.params;
@@ -77,7 +77,7 @@ export async function DELETE(
   const ip = getClientIp(_request);
 
   try {
-    // RBAC: Solo Admin puede eliminar clientes
+    // RBAC: ÚNICAMENTE Admin puede eliminar clientes (Gestor y Visualizador reciben 403 Forbidden)
     const auth = requireAuth(_request, ['admin']);
     if (auth.errorResponse) return auth.errorResponse;
 

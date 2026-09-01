@@ -20,11 +20,20 @@ import {
   X,
   Lock,
   Info,
+  ShieldAlert,
 } from 'lucide-react';
 
 export default function ClientsPage() {
-  const { user } = useAuth();
-  const canWrite = user?.role === 'admin' || user?.role === 'gestor';
+  const { user, authFetch } = useAuth();
+
+  const isAdmin = user?.role === 'admin';
+  const isGestor = user?.role === 'gestor';
+  const isVisualizador = user?.role === 'visualizador';
+
+  // Matriz de permisos actualizada
+  const canCreate = isAdmin || isGestor;
+  const canEdit = isAdmin || isGestor;
+  const canDelete = isAdmin; // Solo el Administrador puede eliminar clientes
 
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,9 +53,11 @@ export default function ClientsPage() {
 
   const fetchClients = async () => {
     try {
-      const res = await fetch('/api/clients');
+      const res = await authFetch('/api/clients');
       const data = await res.json();
-      if (data.success) setClients(data.data);
+      if (data.success) {
+        setClients(data.data);
+      }
     } catch (err) {
       console.error('Error fetching clients:', err);
     } finally {
@@ -59,18 +70,26 @@ export default function ClientsPage() {
   }, []);
 
   const handleOpenCreate = () => {
-    if (!canWrite) return;
+    if (!canCreate) return;
     setEditingClient(null);
-    setName(''); setTaxId(''); setEmail(''); setPhone(''); setAddress(''); setContactName('');
+    setName('');
+    setTaxId('');
+    setEmail('');
+    setPhone('');
+    setAddress('');
+    setContactName('');
     setError(null);
     setModalOpen(true);
   };
 
   const handleOpenEdit = (client: Client) => {
-    if (!canWrite) return;
+    if (!canEdit) return;
     setEditingClient(client);
-    setName(client.name); setTaxId(client.tax_id); setEmail(client.email);
-    setPhone(client.phone || ''); setAddress(client.address || '');
+    setName(client.name);
+    setTaxId(client.tax_id);
+    setEmail(client.email);
+    setPhone(client.phone || '');
+    setAddress(client.address || '');
     setContactName(client.contact_name || '');
     setError(null);
     setModalOpen(true);
@@ -78,19 +97,30 @@ export default function ClientsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canWrite) return;
+    if (!canCreate && !editingClient) return;
+    if (!canEdit && editingClient) return;
+
     setError(null);
     setSubmitting(true);
     try {
       const url = editingClient ? `/api/clients/${editingClient.id}` : '/api/clients';
       const method = editingClient ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, tax_id: taxId, email, phone, address, contact_name: contactName }),
+        body: JSON.stringify({
+          name,
+          tax_id: taxId,
+          email,
+          phone,
+          address,
+          contact_name: contactName,
+        }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Error al guardar cliente');
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || data.error || 'Error al guardar cliente');
+      }
       setSuccessMsg(editingClient ? 'Cliente actualizado exitosamente' : 'Cliente registrado exitosamente');
       setModalOpen(false);
       fetchClients();
@@ -102,12 +132,19 @@ export default function ClientsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!canWrite) return;
-    if (!confirm('¿Está seguro de eliminar este cliente?')) return;
+    if (!canDelete) {
+      alert('Solo los administradores tienen permiso para eliminar clientes.');
+      return;
+    }
+    if (!confirm('¿Está seguro de eliminar este cliente de forma definitiva?')) return;
     try {
-      const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+      const res = await authFetch(`/api/clients/${id}`, { method: 'DELETE' });
       const data = await res.json();
-      if (!res.ok || !data.success) { alert(data.error || 'Error al eliminar'); return; }
+      if (!res.ok || !data.success) {
+        alert(data.message || data.error || 'Error al eliminar');
+        return;
+      }
+      setSuccessMsg('Cliente eliminado del sistema.');
       fetchClients();
     } catch (err: any) {
       alert(err.message);
@@ -138,7 +175,7 @@ export default function ClientsPage() {
             </p>
           </div>
 
-          {canWrite ? (
+          {canCreate ? (
             <button
               onClick={handleOpenCreate}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
@@ -148,26 +185,43 @@ export default function ClientsPage() {
               <span>Nuevo Cliente</span>
             </button>
           ) : (
-            <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 rounded-xl text-xs font-semibold cursor-not-allowed select-none" title="Sin permiso para crear clientes">
+            <div
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 rounded-xl text-xs font-semibold cursor-not-allowed select-none"
+              title="Sin permiso para crear clientes"
+            >
               <Lock className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Solo lectura</span>
             </div>
           )}
         </div>
 
-        {/* Aviso de permisos para visualizador */}
-        {!canWrite && (
+        {/* Banner descriptivo de permisos para Visualizador */}
+        {isVisualizador && (
           <div
             role="status"
             className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 rounded-2xl text-xs text-blue-800 dark:text-blue-300"
           >
             <Info className="w-4 h-4 shrink-0 mt-0.5 text-blue-500" aria-hidden="true" />
             <div>
-              <strong className="font-bold">Modo de solo lectura</strong>
+              <strong className="font-bold">Modo de consulta (Visualizador)</strong>
               <p className="mt-0.5 text-blue-700 dark:text-blue-400">
-                Tu rol de <span className="font-semibold capitalize">{user?.role}</span> te permite
-                consultar el directorio de clientes, pero no puedes crear, editar ni eliminar registros.
-                Contacta a un Administrador si necesitas realizar cambios.
+                Tu rol te permite consultar la cartera de clientes, pero no puedes crear, modificar ni eliminar registros.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Banner descriptivo de permisos para Gestor */}
+        {isGestor && (
+          <div
+            role="status"
+            className="flex items-start gap-3 p-4 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 rounded-2xl text-xs text-amber-800 dark:text-amber-300"
+          >
+            <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" aria-hidden="true" />
+            <div>
+              <strong className="font-bold">Permisos de Gestor (Operativo)</strong>
+              <p className="mt-0.5 text-amber-700 dark:text-amber-400">
+                Puedes registrar nuevos clientes y editar su información de contacto o fiscal. La eliminación de clientes está reservada exclusivamente para Administradores.
               </p>
             </div>
           </div>
@@ -196,7 +250,7 @@ export default function ClientsPage() {
           />
         </div>
 
-        {/* Grid */}
+        {/* Grid de Tarjetas de Clientes */}
         {loading ? (
           <div className="p-12 text-center text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" aria-hidden="true" />
@@ -225,32 +279,42 @@ export default function ClientsPage() {
                       </h3>
                     </div>
 
-                    {/* Botones de acción solo para admin/gestor */}
-                    {canWrite ? (
-                      <div className="flex items-center gap-1 shrink-0">
+                    {/* Botones de acción según RBAC */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {/* Botón Editar: Visible para Admin y Gestor */}
+                      {canEdit && (
                         <button
                           onClick={() => handleOpenEdit(client)}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                          className="p-1.5 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                           aria-label={`Editar cliente ${client.name}`}
+                          title="Editar información del cliente"
                         >
                           <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
+                      )}
+
+                      {/* Botón Eliminar: ÚNICAMENTE visible para Admin. Oculto para Gestor y Visualizador */}
+                      {canDelete && (
                         <button
                           onClick={() => handleDelete(client.id)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                          className="p-1.5 text-slate-500 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                           aria-label={`Eliminar cliente ${client.name}`}
+                          title="Eliminar cliente permanentemente (Admin)"
                         >
                           <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
-                      </div>
-                    ) : (
-                      <span
-                        className="p-1.5 text-slate-300 dark:text-zinc-600 cursor-not-allowed"
-                        title="No tienes permiso para editar"
-                      >
-                        <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-                      </span>
-                    )}
+                      )}
+
+                      {/* Visualizador sin permisos */}
+                      {!canEdit && !canDelete && (
+                        <span
+                          className="p-1.5 text-slate-300 dark:text-zinc-600 cursor-not-allowed"
+                          title="Solo lectura"
+                        >
+                          <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2 text-xs text-slate-600 dark:text-zinc-400 border-t border-slate-100 dark:border-zinc-800 pt-3">
@@ -284,8 +348,8 @@ export default function ClientsPage() {
         )}
       </main>
 
-      {/* Modal (solo disponible para admin/gestor) */}
-      {modalOpen && canWrite && (
+      {/* Modal Crear / Editar (Accesible por Admin y Gestor) */}
+      {modalOpen && (canCreate || canEdit) && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
           role="dialog"
@@ -315,47 +379,96 @@ export default function ClientsPage() {
 
             <form onSubmit={handleSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold mb-1">Razón Social / Nombre *</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl" required />
+                <label className="block font-semibold mb-1 text-slate-700 dark:text-zinc-300">
+                  Razón Social / Nombre *
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl"
+                  required
+                />
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1">RUC / NIT / CIF *</label>
-                  <input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl" required />
+                  <label className="block font-semibold mb-1 text-slate-700 dark:text-zinc-300">
+                    RUC / NIT / CIF *
+                  </label>
+                  <input
+                    type="text"
+                    value={taxId}
+                    onChange={(e) => setTaxId(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl"
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Correo Notificaciones *</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl" required />
+                  <label className="block font-semibold mb-1 text-slate-700 dark:text-zinc-300">
+                    Correo Notificaciones *
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl"
+                    required
+                  />
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1">Persona de Contacto</label>
-                  <input type="text" value={contactName} onChange={(e) => setContactName(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl" />
+                  <label className="block font-semibold mb-1 text-slate-700 dark:text-zinc-300">
+                    Persona de Contacto
+                  </label>
+                  <input
+                    type="text"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl"
+                  />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Teléfono</label>
-                  <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl" />
+                  <label className="block font-semibold mb-1 text-slate-700 dark:text-zinc-300">
+                    Teléfono
+                  </label>
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl"
+                  />
                 </div>
               </div>
+
               <div>
-                <label className="block font-semibold mb-1">Dirección Fiscal</label>
-                <input type="text" value={address} onChange={(e) => setAddress(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl" />
+                <label className="block font-semibold mb-1 text-slate-700 dark:text-zinc-300">
+                  Dirección Fiscal
+                </label>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl"
+                />
               </div>
+
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800">
-                <button type="button" onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                >
                   Cancelar
                 </button>
-                <button type="submit" disabled={submitting}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold cursor-pointer">
-                  {submitting ? 'Guardando...' : 'Guardar Cliente'}
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold cursor-pointer"
+                >
+                  {submitting ? 'Guardando...' : editingClient ? 'Guardar Cambios' : 'Guardar Cliente'}
                 </button>
               </div>
             </form>

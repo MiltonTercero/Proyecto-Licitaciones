@@ -1,4 +1,6 @@
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
 import {
   Client,
   Product,
@@ -13,7 +15,7 @@ import {
   RoleType,
 } from '@/lib/types/database';
 
-// ROLES INICIALES
+// ROLES INICIALES POR DEFECTO
 const initialRoles: Role[] = [
   {
     id: 'r0000001-0000-0000-0000-000000000001',
@@ -99,8 +101,8 @@ const initialClients: Client[] = [
     phone: '+51 987 654 321',
     address: 'Av. Las Begonias 450, San Isidro, Lima',
     contact_name: 'Ing. Roberto Mendoza',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: 'a0000001-0000-0000-0000-000000000002',
@@ -110,8 +112,8 @@ const initialClients: Client[] = [
     phone: '+57 310 987 6543',
     address: 'Cra. 45 # 120-30, Bogotá',
     contact_name: 'Dra. Patricia Silva',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: 'a0000001-0000-0000-0000-000000000003',
@@ -121,8 +123,8 @@ const initialClients: Client[] = [
     phone: '+56 2 2345 6789',
     address: 'Calle Moneda 820, Santiago',
     contact_name: 'Lic. Alejandro Torres',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: 'a0000001-0000-0000-0000-000000000004',
@@ -132,8 +134,8 @@ const initialClients: Client[] = [
     phone: '+51 999 111 222',
     address: 'Av. El Sol 880, Arequipa',
     contact_name: 'Arq. Marcela Castro',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
 ];
 
@@ -143,7 +145,7 @@ const initialProducts: Product[] = [
     id: 'b0000001-0000-0000-0000-000000000001',
     code: 'SRV-ENT-001',
     name: 'Servidor Rack Enterprise Dell PowerEdge R750',
-    description: '2x Xeon Gold, 128GB RAM DDR4, 4x 1.92TB SSD NVMe, Dual PSU Redundante',
+    description: '2x Xeon Gold, 128GB RAM DDR4, 4x 1.92TB SSD NVMe, Dual PSU',
     unit_price: 4850.0,
     unit_measure: 'UNIDAD',
     is_active: true,
@@ -154,7 +156,7 @@ const initialProducts: Product[] = [
     id: 'b0000001-0000-0000-0000-000000000002',
     code: 'LIC-SO-WIN',
     name: 'Licencia Microsoft Windows Server 2022 Datacenter',
-    description: 'Licencia OEM 16 núcleos con soporte de virtualización ilimitada Hyper-V',
+    description: 'Licencia OEM 16 núcleos con soporte de virtualización ilimitada',
     unit_price: 1250.0,
     unit_measure: 'LICENCIA',
     is_active: true,
@@ -165,7 +167,7 @@ const initialProducts: Product[] = [
     id: 'b0000001-0000-0000-0000-000000000003',
     code: 'NET-SW-C9300',
     name: 'Switch Cisco Catalyst 9300 48 Puertos PoE+ Gigabit',
-    description: 'Switch administrable Layer 3 con módulo uplink 10GbE y garantía extendida',
+    description: 'Switch administrable Layer 3 con módulo de fibra 10GbE y Network Essentials',
     unit_price: 3400.0,
     unit_measure: 'UNIDAD',
     is_active: true,
@@ -176,7 +178,7 @@ const initialProducts: Product[] = [
     id: 'b0000001-0000-0000-0000-000000000004',
     code: 'UPS-APC-3KVA',
     name: 'Sistema UPS Online APC Smart-UPS RT 3000VA 230V',
-    description: 'Doble conversión en línea, pantalla LCD, gestión remota SNMP y bypass',
+    description: 'Doble conversión en línea, pantalla LCD, gestión remota SNMP',
     unit_price: 1890.0,
     unit_measure: 'UNIDAD',
     is_active: true,
@@ -186,8 +188,8 @@ const initialProducts: Product[] = [
   {
     id: 'b0000001-0000-0000-0000-000000000005',
     code: 'SRV-INST-PRO',
-    name: 'Servicio Profesional de Implementación y Certificación',
-    description: 'Montaje en rack, configuración de clúster, cableado estructurado Cat6A',
+    name: 'Servicio Profesional de Implementación y Cableado Estructurado',
+    description: 'Despliegue, configuración en clúster, cableado Cat6A y certificación',
     unit_price: 2500.0,
     unit_measure: 'SERVICIO',
     is_active: true,
@@ -208,7 +210,7 @@ const initialProducts: Product[] = [
 ];
 
 // LICITACIONES INICIALES
-let memoryTenders: Tender[] = [
+const initialTenders: Tender[] = [
   {
     id: 'c0000001-0000-0000-0000-000000000001',
     code: 'LIC-2026-001',
@@ -313,13 +315,7 @@ let memoryTenders: Tender[] = [
   },
 ];
 
-let memoryClients: Client[] = [...initialClients];
-let memoryProducts: Product[] = [...initialProducts];
-let memoryUsers: User[] = [...initialUsers];
-let memoryRoles: Role[] = [...initialRoles];
-let memoryAuditLogs: AuditLog[] = [];
-
-let memoryItems: TenderItem[] = [
+const initialItems: TenderItem[] = [
   {
     id: 'i-001',
     tender_id: 'c0000001-0000-0000-0000-000000000001',
@@ -403,7 +399,7 @@ let memoryItems: TenderItem[] = [
   },
 ];
 
-let memoryPayments: Payment[] = [
+const initialPayments: Payment[] = [
   {
     id: 'd0000001-0000-0000-0000-000000000001',
     tender_id: 'c0000001-0000-0000-0000-000000000004',
@@ -438,7 +434,7 @@ let memoryPayments: Payment[] = [
   },
 ];
 
-let memoryTransitions: TenderTransition[] = [
+const initialTransitions: TenderTransition[] = [
   {
     id: 't-001',
     tender_id: 'c0000001-0000-0000-0000-000000000001',
@@ -531,6 +527,108 @@ let memoryTransitions: TenderTransition[] = [
   },
 ];
 
+// ==============================================================================
+// PERSISTENCIA PERMANENTE EN ARCHIVO (data/db.json)
+// Carga los datos existentes sin sobrescribirlos en reinicios de servidor
+// ==============================================================================
+const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_FILE = path.join(DATA_DIR, 'db.json');
+
+interface DbState {
+  roles: Role[];
+  users: User[];
+  clients: Client[];
+  products: Product[];
+  tenders: Tender[];
+  items: TenderItem[];
+  payments: Payment[];
+  transitions: TenderTransition[];
+  auditLogs: AuditLog[];
+}
+
+function loadPersistedState(): DbState {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (fs.existsSync(DATA_FILE)) {
+      const content = fs.readFileSync(DATA_FILE, 'utf-8');
+      const parsed = JSON.parse(content);
+      return {
+        roles: parsed.roles || initialRoles,
+        users: parsed.users || initialUsers,
+        clients: parsed.clients || initialClients,
+        products: parsed.products || initialProducts,
+        tenders: parsed.tenders || initialTenders,
+        items: parsed.items || initialItems,
+        payments: parsed.payments || initialPayments,
+        transitions: parsed.transitions || initialTransitions,
+        auditLogs: parsed.auditLogs || [],
+      };
+    }
+  } catch (err) {
+    console.error('[STORAGE] Error leyendo data/db.json, usando semillas iniciales:', err);
+  }
+
+  // Primera inicialización: Guarda los datos iniciales por única vez
+  const initialState: DbState = {
+    roles: initialRoles,
+    users: initialUsers,
+    clients: initialClients,
+    products: initialProducts,
+    tenders: initialTenders,
+    items: initialItems,
+    payments: initialPayments,
+    transitions: initialTransitions,
+    auditLogs: [],
+  };
+
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(initialState, null, 2), 'utf-8');
+    console.log('[STORAGE] data/db.json inicializado por primera vez con éxito.');
+  } catch (err) {
+    console.error('[STORAGE] Error guardando archivo inicial db.json:', err);
+  }
+
+  return initialState;
+}
+
+const state = loadPersistedState();
+let memoryRoles: Role[] = state.roles;
+let memoryUsers: User[] = state.users;
+let memoryClients: Client[] = state.clients;
+let memoryProducts: Product[] = state.products;
+let memoryTenders: Tender[] = state.tenders;
+let memoryItems: TenderItem[] = state.items;
+let memoryPayments: Payment[] = state.payments;
+let memoryTransitions: TenderTransition[] = state.transitions;
+let memoryAuditLogs: AuditLog[] = state.auditLogs;
+
+function persistData(): void {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    const current: DbState = {
+      roles: memoryRoles,
+      users: memoryUsers,
+      clients: memoryClients,
+      products: memoryProducts,
+      tenders: memoryTenders,
+      items: memoryItems,
+      payments: memoryPayments,
+      transitions: memoryTransitions,
+      auditLogs: memoryAuditLogs,
+    };
+    fs.writeFileSync(DATA_FILE, JSON.stringify(current, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[STORAGE] Error persistiendo en data/db.json:', err);
+  }
+}
+
 export const VALID_TRANSITIONS: Record<string, TenderStatus[]> = {
   borrador: ['activa'],
   activa: ['finalizada', 'perdida'],
@@ -566,7 +664,6 @@ export const dataStore = {
   },
 
   async getUserByEmail(email: string): Promise<User | null> {
-    // Consulta parametrizada exacta insensible a mayúsculas
     const normalized = email.trim().toLowerCase();
     const user = memoryUsers.find((u) => u.email.toLowerCase() === normalized);
     if (!user) return null;
@@ -602,6 +699,7 @@ export const dataStore = {
     };
 
     memoryUsers.unshift(newUser);
+    persistData();
     return newUser;
   },
 
@@ -639,6 +737,7 @@ export const dataStore = {
       updated_at: new Date().toISOString(),
     };
 
+    persistData();
     return memoryUsers[index];
   },
 
@@ -646,6 +745,7 @@ export const dataStore = {
     const index = memoryUsers.findIndex((u) => u.id === id);
     if (index === -1) throw new Error('Usuario no encontrado');
     memoryUsers.splice(index, 1);
+    persistData();
     return true;
   },
 
@@ -653,6 +753,7 @@ export const dataStore = {
     const index = memoryUsers.findIndex((u) => u.id === id);
     if (index !== -1) {
       memoryUsers[index].last_login = new Date().toISOString();
+      persistData();
     }
   },
 
@@ -661,6 +762,7 @@ export const dataStore = {
   // ==========================================
   async createAuditLog(log: AuditLog): Promise<AuditLog> {
     memoryAuditLogs.unshift(log);
+    persistData();
     return log;
   },
 
@@ -696,7 +798,7 @@ export const dataStore = {
   },
 
   // ==========================================
-  // CLIENTES (Con Búsqueda Parametrizada e Índices)
+  // CLIENTES
   // ==========================================
   async getClients(): Promise<Client[]> {
     return memoryClients;
@@ -716,7 +818,6 @@ export const dataStore = {
     if (!cleanQuery) {
       filtered = memoryClients;
     } else {
-      // Búsqueda parametrizada segura simulando índice por name y email
       filtered = memoryClients.filter(
         (c) =>
           c.name.toLowerCase().includes(cleanQuery) ||
@@ -757,6 +858,7 @@ export const dataStore = {
       updated_at: new Date().toISOString(),
     };
     memoryClients.unshift(newClient);
+    persistData();
     return newClient;
   },
 
@@ -768,6 +870,7 @@ export const dataStore = {
       ...clientData,
       updated_at: new Date().toISOString(),
     };
+    persistData();
     return memoryClients[index];
   },
 
@@ -777,6 +880,7 @@ export const dataStore = {
       throw new Error('No se puede eliminar un cliente con licitaciones asociadas');
     }
     memoryClients = memoryClients.filter((c) => c.id !== id);
+    persistData();
     return true;
   },
 
@@ -806,6 +910,7 @@ export const dataStore = {
       updated_at: new Date().toISOString(),
     };
     memoryProducts.unshift(newProduct);
+    persistData();
     return newProduct;
   },
 
@@ -821,6 +926,7 @@ export const dataStore = {
           : memoryProducts[index].unit_price,
       updated_at: new Date().toISOString(),
     };
+    persistData();
     return memoryProducts[index];
   },
 
@@ -830,6 +936,7 @@ export const dataStore = {
       throw new Error('No se puede eliminar un producto utilizado en licitaciones existentes');
     }
     memoryProducts = memoryProducts.filter((p) => p.id !== id);
+    persistData();
     return true;
   },
 
@@ -898,6 +1005,7 @@ export const dataStore = {
     };
 
     memoryTenders.unshift(newTender);
+    persistData();
 
     await this.logTransition(
       newTender.id,
@@ -922,6 +1030,7 @@ export const dataStore = {
     memoryTenders[index].proposal_file_size = fileData.size;
     memoryTenders[index].updated_at = new Date().toISOString();
 
+    persistData();
     return this.populateTender(memoryTenders[index]);
   },
 
@@ -991,6 +1100,7 @@ export const dataStore = {
     }
 
     tender.updated_at = new Date().toISOString();
+    persistData();
     return { item: newItem, tender: this.populateTender(tender) };
   },
 
@@ -1013,6 +1123,7 @@ export const dataStore = {
 
     tender.total_estimado = newTotal;
     tender.updated_at = new Date().toISOString();
+    persistData();
 
     return this.populateTender(tender);
   },
@@ -1049,6 +1160,7 @@ export const dataStore = {
 
     tender.status = newStatus;
     tender.updated_at = new Date().toISOString();
+    persistData();
 
     await this.logTransition(tenderId, previousStatus, newStatus, userName, notes);
 
@@ -1118,6 +1230,8 @@ export const dataStore = {
       );
     }
 
+    persistData();
+
     return {
       payment: newPayment,
       tender: this.populateTender(tender),
@@ -1145,6 +1259,7 @@ export const dataStore = {
       created_at: new Date().toISOString(),
     };
     memoryTransitions.unshift(transition);
+    persistData();
     return transition;
   },
 
