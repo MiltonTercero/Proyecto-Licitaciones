@@ -31,7 +31,7 @@ export async function POST(
     let fileUrl = '';
 
     // Si Supabase Storage está configurado, subir al bucket 'proposals'
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured()) {
       try {
         const supabase = createAdminSupabaseClient();
         const fileExt = fileName.split('.').pop();

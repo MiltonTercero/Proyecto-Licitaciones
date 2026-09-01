@@ -1,6 +1,4 @@
-import bcrypt from 'bcryptjs';
-import fs from 'fs';
-import path from 'path';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import {
   Client,
   Product,
@@ -15,620 +13,6 @@ import {
   RoleType,
 } from '@/lib/types/database';
 
-// ROLES INICIALES POR DEFECTO
-const initialRoles: Role[] = [
-  {
-    id: 'r0000001-0000-0000-0000-000000000001',
-    name: 'admin',
-    description: 'Acceso total y administración del sistema',
-  },
-  {
-    id: 'r0000001-0000-0000-0000-000000000002',
-    name: 'gestor',
-    description: 'Gestión operativa de licitaciones y transiciones',
-  },
-  {
-    id: 'r0000001-0000-0000-0000-000000000003',
-    name: 'visualizador',
-    description: 'Solo lectura de catálogos y licitaciones',
-  },
-];
-
-// Hash bcrypt precalculado para "Admin123!", "Gestor123!", "Visual123!" con 12 rondas
-const ADMIN_HASH = bcrypt.hashSync('Admin123!', 12);
-const GESTOR_HASH = bcrypt.hashSync('Gestor123!', 12);
-const VISUAL_HASH = bcrypt.hashSync('Visual123!', 12);
-
-// USUARIOS INICIALES
-const initialUsers: User[] = [
-  {
-    id: 'u0000001-0000-0000-0000-000000000001',
-    email: 'admin@csc.com',
-    password_hash: ADMIN_HASH,
-    role_id: 'r0000001-0000-0000-0000-000000000001',
-    role: 'admin',
-    full_name: 'Admin Comercial',
-    is_active: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
-    last_login: new Date().toISOString(),
-  },
-  {
-    id: 'u0000001-0000-0000-0000-000000000002',
-    email: 'admin@test.com',
-    password_hash: ADMIN_HASH,
-    role_id: 'r0000001-0000-0000-0000-000000000001',
-    role: 'admin',
-    full_name: 'Administrador de Pruebas',
-    is_active: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    last_login: null,
-  },
-  {
-    id: 'u0000001-0000-0000-0000-000000000003',
-    email: 'gestor@csc.com',
-    password_hash: GESTOR_HASH,
-    role_id: 'r0000001-0000-0000-0000-000000000002',
-    role: 'gestor',
-    full_name: 'Carlos Mendoza Gestor',
-    is_active: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-    last_login: null,
-  },
-  {
-    id: 'u0000001-0000-0000-0000-000000000004',
-    email: 'visualizador@csc.com',
-    password_hash: VISUAL_HASH,
-    role_id: 'r0000001-0000-0000-0000-000000000003',
-    role: 'visualizador',
-    full_name: 'Ana Rivas Visualizadora',
-    is_active: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-    last_login: null,
-  },
-];
-
-// CLIENTES INICIALES
-const initialClients: Client[] = [
-  {
-    id: 'a0000001-0000-0000-0000-000000000001',
-    name: 'Corporación Minera Andina S.A.',
-    tax_id: 'RUC-20489123451',
-    email: 'licitaciones@mineraandina.com',
-    phone: '+51 987 654 321',
-    address: 'Av. Las Begonias 450, San Isidro, Lima',
-    contact_name: 'Ing. Roberto Mendoza',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'a0000001-0000-0000-0000-000000000002',
-    name: 'Hospital Metropolitano del Norte',
-    tax_id: 'NIT-901234567-8',
-    email: 'compras@hospitalmetronorte.org',
-    phone: '+57 310 987 6543',
-    address: 'Cra. 45 # 120-30, Bogotá',
-    contact_name: 'Dra. Patricia Silva',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'a0000001-0000-0000-0000-000000000003',
-    name: 'Gobierno Regional de Infraestructura',
-    tax_id: 'RUT-76543210-K',
-    email: 'abastecimiento@gobregion.gob',
-    phone: '+56 2 2345 6789',
-    address: 'Calle Moneda 820, Santiago',
-    contact_name: 'Lic. Alejandro Torres',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'a0000001-0000-0000-0000-000000000004',
-    name: 'Constructora e Inmobiliaria Horizon',
-    tax_id: 'RUC-20601239874',
-    email: 'proyectos@constructora-horizon.com',
-    phone: '+51 999 111 222',
-    address: 'Av. El Sol 880, Arequipa',
-    contact_name: 'Arq. Marcela Castro',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
-// PRODUCTOS INICIALES
-const initialProducts: Product[] = [
-  {
-    id: 'b0000001-0000-0000-0000-000000000001',
-    code: 'SRV-ENT-001',
-    name: 'Servidor Rack Enterprise Dell PowerEdge R750',
-    description: '2x Xeon Gold, 128GB RAM DDR4, 4x 1.92TB SSD NVMe, Dual PSU',
-    unit_price: 4850.0,
-    unit_measure: 'UNIDAD',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'b0000001-0000-0000-0000-000000000002',
-    code: 'LIC-SO-WIN',
-    name: 'Licencia Microsoft Windows Server 2022 Datacenter',
-    description: 'Licencia OEM 16 núcleos con soporte de virtualización ilimitada',
-    unit_price: 1250.0,
-    unit_measure: 'LICENCIA',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'b0000001-0000-0000-0000-000000000003',
-    code: 'NET-SW-C9300',
-    name: 'Switch Cisco Catalyst 9300 48 Puertos PoE+ Gigabit',
-    description: 'Switch administrable Layer 3 con módulo de fibra 10GbE y Network Essentials',
-    unit_price: 3400.0,
-    unit_measure: 'UNIDAD',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'b0000001-0000-0000-0000-000000000004',
-    code: 'UPS-APC-3KVA',
-    name: 'Sistema UPS Online APC Smart-UPS RT 3000VA 230V',
-    description: 'Doble conversión en línea, pantalla LCD, gestión remota SNMP',
-    unit_price: 1890.0,
-    unit_measure: 'UNIDAD',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'b0000001-0000-0000-0000-000000000005',
-    code: 'SRV-INST-PRO',
-    name: 'Servicio Profesional de Implementación y Cableado Estructurado',
-    description: 'Despliegue, configuración en clúster, cableado Cat6A y certificación',
-    unit_price: 2500.0,
-    unit_measure: 'SERVICIO',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'b0000001-0000-0000-0000-000000000006',
-    code: 'LAP-BUS-THINK',
-    name: 'Laptop Empresarial Lenovo ThinkPad T14 Gen 4',
-    description: 'Core i7 13th Gen, 32GB RAM, 1TB SSD, 14 pulgadas FHD, Win 11 Pro',
-    unit_price: 1450.0,
-    unit_measure: 'UNIDAD',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
-// LICITACIONES INICIALES
-const initialTenders: Tender[] = [
-  {
-    id: 'c0000001-0000-0000-0000-000000000001',
-    code: 'LIC-2026-001',
-    title: 'Renovación de Servidores Data Center Central',
-    description: 'Suministro e instalación de 4 servidores de alta densidad para base de datos transaccional.',
-    client_id: 'a0000001-0000-0000-0000-000000000001',
-    status: 'borrador',
-    presupuesto_maximo: 30000.0,
-    total_estimado: 21900.0,
-    fecha_limite: new Date(Date.now() + 1000 * 60 * 60 * 24 * 15).toISOString(),
-    proposal_file_url: 'https://raw.githubusercontent.com/sample/propuesta-servidores.pdf',
-    proposal_file_name: 'Propuesta_Tecnica_MineraAndina_v1.pdf',
-    proposal_file_size: 2450120,
-    reminder_sent: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-  {
-    id: 'c0000001-0000-0000-0000-000000000002',
-    code: 'LIC-2026-002',
-    title: 'Equipamiento de Redes y Switches Hospitalarios',
-    description: 'Infraestructura de red de alta disponibilidad para salas de urgencias y telemedicina.',
-    client_id: 'a0000001-0000-0000-0000-000000000002',
-    status: 'activa',
-    presupuesto_maximo: 25000.0,
-    total_estimado: 16100.0,
-    fecha_limite: new Date(Date.now() + 1000 * 60 * 60 * 30).toISOString(),
-    proposal_file_url: 'https://raw.githubusercontent.com/sample/propuesta-hospital.pdf',
-    proposal_file_name: 'Propuesta_Hospital_Redes_2026.pdf',
-    proposal_file_size: 1890450,
-    reminder_sent: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-  },
-  {
-    id: 'c0000001-0000-0000-0000-000000000003',
-    code: 'LIC-2026-003',
-    title: 'Modernización de Laptops para Área de Ingeniería',
-    description: 'Dotación de 10 equipos de cómputo de alto rendimiento para proyectos de infraestructura.',
-    client_id: 'a0000001-0000-0000-0000-000000000003',
-    status: 'finalizada',
-    presupuesto_maximo: 18000.0,
-    total_estimado: 14500.0,
-    fecha_limite: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-    proposal_file_url: 'https://raw.githubusercontent.com/sample/propuesta-laptops.pdf',
-    proposal_file_name: 'Propuesta_Gobierno_Laptops.pdf',
-    proposal_file_size: 1420800,
-    reminder_sent: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-  },
-  {
-    id: 'c0000001-0000-0000-0000-000000000004',
-    code: 'LIC-2026-004',
-    title: 'Sistemas de Respaldo Energético UPS para Obras',
-    description: 'Instalación de bancos de baterías y UPS de 3kVA en campamento minero.',
-    client_id: 'a0000001-0000-0000-0000-000000000004',
-    status: 'por_cobrar',
-    presupuesto_maximo: 12000.0,
-    total_estimado: 8170.0,
-    fecha_limite: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-    proposal_file_url: 'https://raw.githubusercontent.com/sample/propuesta-ups.pdf',
-    proposal_file_name: 'Propuesta_Horizon_Energia.pdf',
-    proposal_file_size: 980300,
-    reminder_sent: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-  },
-  {
-    id: 'c0000001-0000-0000-0000-000000000005',
-    code: 'LIC-2026-005',
-    title: 'Cableado y Certificación de Fibra Óptica',
-    description: 'Servicio de integración de redes y canalización subterránea.',
-    client_id: 'a0000001-0000-0000-0000-000000000001',
-    status: 'cobrada',
-    presupuesto_maximo: 8000.0,
-    total_estimado: 5000.0,
-    fecha_limite: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40).toISOString(),
-    proposal_file_url: 'https://raw.githubusercontent.com/sample/propuesta-fibra.pdf',
-    proposal_file_name: 'Propuesta_Minera_Fibra.pdf',
-    proposal_file_size: 850200,
-    reminder_sent: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 50).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-  },
-  {
-    id: 'c0000001-0000-0000-0000-000000000006',
-    code: 'LIC-2026-006',
-    title: 'Licenciamiento Corporativo de Servidores',
-    description: 'Adquisición de licencias para data center alterno.',
-    client_id: 'a0000001-0000-0000-0000-000000000002',
-    status: 'perdida',
-    presupuesto_maximo: 10000.0,
-    total_estimado: 6250.0,
-    fecha_limite: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-    proposal_file_url: 'https://raw.githubusercontent.com/sample/propuesta-licencias.pdf',
-    proposal_file_name: 'Propuesta_Licencias_Metronorte.pdf',
-    proposal_file_size: 620100,
-    reminder_sent: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-  },
-];
-
-const initialItems: TenderItem[] = [
-  {
-    id: 'i-001',
-    tender_id: 'c0000001-0000-0000-0000-000000000001',
-    product_id: 'b0000001-0000-0000-0000-000000000001',
-    quantity: 4,
-    unit_price: 4850.0,
-    subtotal: 19400.0,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'i-002',
-    tender_id: 'c0000001-0000-0000-0000-000000000001',
-    product_id: 'b0000001-0000-0000-0000-000000000005',
-    quantity: 1,
-    unit_price: 2500.0,
-    subtotal: 2500.0,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'i-003',
-    tender_id: 'c0000001-0000-0000-0000-000000000002',
-    product_id: 'b0000001-0000-0000-0000-000000000003',
-    quantity: 4,
-    unit_price: 3400.0,
-    subtotal: 13600.0,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'i-004',
-    tender_id: 'c0000001-0000-0000-0000-000000000002',
-    product_id: 'b0000001-0000-0000-0000-000000000005',
-    quantity: 1,
-    unit_price: 2500.0,
-    subtotal: 2500.0,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'i-005',
-    tender_id: 'c0000001-0000-0000-0000-000000000003',
-    product_id: 'b0000001-0000-0000-0000-000000000006',
-    quantity: 10,
-    unit_price: 1450.0,
-    subtotal: 14500.0,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'i-006',
-    tender_id: 'c0000001-0000-0000-0000-000000000004',
-    product_id: 'b0000001-0000-0000-0000-000000000004',
-    quantity: 3,
-    unit_price: 1890.0,
-    subtotal: 5670.0,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'i-007',
-    tender_id: 'c0000001-0000-0000-0000-000000000004',
-    product_id: 'b0000001-0000-0000-0000-000000000005',
-    quantity: 1,
-    unit_price: 2500.0,
-    subtotal: 2500.0,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'i-008',
-    tender_id: 'c0000001-0000-0000-0000-000000000005',
-    product_id: 'b0000001-0000-0000-0000-000000000005',
-    quantity: 2,
-    unit_price: 2500.0,
-    subtotal: 5000.0,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'i-009',
-    tender_id: 'c0000001-0000-0000-0000-000000000006',
-    product_id: 'b0000001-0000-0000-0000-000000000002',
-    quantity: 5,
-    unit_price: 1250.0,
-    subtotal: 6250.0,
-    created_at: new Date().toISOString(),
-  },
-];
-
-const initialPayments: Payment[] = [
-  {
-    id: 'd0000001-0000-0000-0000-000000000001',
-    tender_id: 'c0000001-0000-0000-0000-000000000004',
-    amount: 3000.0,
-    payment_date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString().split('T')[0],
-    reference: 'Anticipo 35% - Transf. BCP #9872134',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-  },
-  {
-    id: 'd0000001-0000-0000-0000-000000000002',
-    tender_id: 'c0000001-0000-0000-0000-000000000004',
-    amount: 2000.0,
-    payment_date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString().split('T')[0],
-    reference: 'Segundo Abono Entrega Parcial - Cheque #44219',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-  },
-  {
-    id: 'd0000001-0000-0000-0000-000000000003',
-    tender_id: 'c0000001-0000-0000-0000-000000000005',
-    amount: 2500.0,
-    payment_date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25).toISOString().split('T')[0],
-    reference: 'Pago 50% Inicio - Factura F001-492',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25).toISOString(),
-  },
-  {
-    id: 'd0000001-0000-0000-0000-000000000004',
-    tender_id: 'c0000001-0000-0000-0000-000000000005',
-    amount: 2500.0,
-    payment_date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString().split('T')[0],
-    reference: 'Pago Final Liquidación - Transf. BBVA #102934',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-  },
-];
-
-const initialTransitions: TenderTransition[] = [
-  {
-    id: 't-001',
-    tender_id: 'c0000001-0000-0000-0000-000000000001',
-    previous_status: 'none',
-    new_status: 'borrador',
-    user_name: 'Admin Comercial',
-    notes: 'Creación inicial de la licitación y definición de presupuesto.',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-  {
-    id: 't-002',
-    tender_id: 'c0000001-0000-0000-0000-000000000002',
-    previous_status: 'none',
-    new_status: 'borrador',
-    user_name: 'Admin Comercial',
-    notes: 'Registro de licitación para equipamiento hospitalario.',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-  },
-  {
-    id: 't-003',
-    tender_id: 'c0000001-0000-0000-0000-000000000002',
-    previous_status: 'borrador',
-    new_status: 'activa',
-    user_name: 'Admin Comercial',
-    notes: 'Subida de propuesta técnica y envío formal por correo con adjunto.',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-  },
-  {
-    id: 't-004',
-    tender_id: 'c0000001-0000-0000-0000-000000000003',
-    previous_status: 'borrador',
-    new_status: 'activa',
-    user_name: 'Admin Comercial',
-    notes: 'Envío formal de propuesta aprobada.',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
-  },
-  {
-    id: 't-005',
-    tender_id: 'c0000001-0000-0000-0000-000000000003',
-    previous_status: 'activa',
-    new_status: 'finalizada',
-    user_name: 'Admin Comercial',
-    notes: 'Licitación adjudicada a nuestra empresa. Entrega de laptops completada.',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-  },
-  {
-    id: 't-006',
-    tender_id: 'c0000001-0000-0000-0000-000000000004',
-    previous_status: 'borrador',
-    new_status: 'activa',
-    user_name: 'Admin Comercial',
-    notes: 'Envío de propuesta económica al cliente.',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-  },
-  {
-    id: 't-007',
-    tender_id: 'c0000001-0000-0000-0000-000000000004',
-    previous_status: 'activa',
-    new_status: 'finalizada',
-    user_name: 'Admin Comercial',
-    notes: 'Adjudicación exitosa y firma de contrato.',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 22).toISOString(),
-  },
-  {
-    id: 't-008',
-    tender_id: 'c0000001-0000-0000-0000-000000000004',
-    previous_status: 'finalizada',
-    new_status: 'por_cobrar',
-    user_name: 'Finanzas / Cobranzas',
-    notes: 'Emisión de Factura F001-0982 por un total de $8,170.00. En gestión de cobro.',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-  },
-  {
-    id: 't-009',
-    tender_id: 'c0000001-0000-0000-0000-000000000005',
-    previous_status: 'por_cobrar',
-    new_status: 'cobrada',
-    user_name: 'Sistema de Cobranza',
-    notes: 'Saldo pendiente llegó a $0.00 tras el registro del pago final. Transición automática.',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-  },
-  {
-    id: 't-010',
-    tender_id: 'c0000001-0000-0000-0000-000000000006',
-    previous_status: 'activa',
-    new_status: 'perdida',
-    user_name: 'Vercel Cron Job (Auto)',
-    notes: 'La fecha límite venció sin confirmación de adjudicación. Transición automática por tarea programada.',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-  },
-];
-
-// ==============================================================================
-// PERSISTENCIA PERMANENTE EN ARCHIVO (data/db.json)
-// Carga los datos existentes sin sobrescribirlos en reinicios de servidor
-// ==============================================================================
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DATA_FILE = path.join(DATA_DIR, 'db.json');
-
-interface DbState {
-  roles: Role[];
-  users: User[];
-  clients: Client[];
-  products: Product[];
-  tenders: Tender[];
-  items: TenderItem[];
-  payments: Payment[];
-  transitions: TenderTransition[];
-  auditLogs: AuditLog[];
-}
-
-function loadPersistedState(): DbState {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    if (fs.existsSync(DATA_FILE)) {
-      const content = fs.readFileSync(DATA_FILE, 'utf-8');
-      const parsed = JSON.parse(content);
-      return {
-        roles: parsed.roles || initialRoles,
-        users: parsed.users || initialUsers,
-        clients: parsed.clients || initialClients,
-        products: parsed.products || initialProducts,
-        tenders: parsed.tenders || initialTenders,
-        items: parsed.items || initialItems,
-        payments: parsed.payments || initialPayments,
-        transitions: parsed.transitions || initialTransitions,
-        auditLogs: parsed.auditLogs || [],
-      };
-    }
-  } catch (err) {
-    console.error('[STORAGE] Error leyendo data/db.json, usando semillas iniciales:', err);
-  }
-
-  // Primera inicialización: Guarda los datos iniciales por única vez
-  const initialState: DbState = {
-    roles: initialRoles,
-    users: initialUsers,
-    clients: initialClients,
-    products: initialProducts,
-    tenders: initialTenders,
-    items: initialItems,
-    payments: initialPayments,
-    transitions: initialTransitions,
-    auditLogs: [],
-  };
-
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(DATA_FILE, JSON.stringify(initialState, null, 2), 'utf-8');
-    console.log('[STORAGE] data/db.json inicializado por primera vez con éxito.');
-  } catch (err) {
-    console.error('[STORAGE] Error guardando archivo inicial db.json:', err);
-  }
-
-  return initialState;
-}
-
-const state = loadPersistedState();
-let memoryRoles: Role[] = state.roles;
-let memoryUsers: User[] = state.users;
-let memoryClients: Client[] = state.clients;
-let memoryProducts: Product[] = state.products;
-let memoryTenders: Tender[] = state.tenders;
-let memoryItems: TenderItem[] = state.items;
-let memoryPayments: Payment[] = state.payments;
-let memoryTransitions: TenderTransition[] = state.transitions;
-let memoryAuditLogs: AuditLog[] = state.auditLogs;
-
-function persistData(): void {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    const current: DbState = {
-      roles: memoryRoles,
-      users: memoryUsers,
-      clients: memoryClients,
-      products: memoryProducts,
-      tenders: memoryTenders,
-      items: memoryItems,
-      payments: memoryPayments,
-      transitions: memoryTransitions,
-      auditLogs: memoryAuditLogs,
-    };
-    fs.writeFileSync(DATA_FILE, JSON.stringify(current, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('[STORAGE] Error persistiendo en data/db.json:', err);
-  }
-}
-
 export const VALID_TRANSITIONS: Record<string, TenderStatus[]> = {
   borrador: ['activa'],
   activa: ['finalizada', 'perdida'],
@@ -638,37 +22,66 @@ export const VALID_TRANSITIONS: Record<string, TenderStatus[]> = {
   perdida: [],
 };
 
+const getSupabase = () => createAdminSupabaseClient();
+
 export const dataStore = {
   // ==========================================
   // ROLES
   // ==========================================
   async getRoles(): Promise<Role[]> {
-    return memoryRoles;
+    const supabase = getSupabase();
+    const { data, error } = await supabase.from('roles').select('*').order('name');
+    if (error) throw new Error(`Error obteniendo roles: ${error.message}`);
+    return data || [];
   },
 
   // ==========================================
   // USUARIOS (RBAC)
   // ==========================================
   async getUsers(): Promise<User[]> {
-    return memoryUsers.map((u) => {
-      const role = memoryRoles.find((r) => r.id === u.role_id)?.name || u.role;
-      return { ...u, role };
-    });
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('users')
+      .select('*, roles(id, name, description)')
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Error obteniendo usuarios: ${error.message}`);
+
+    return (data || []).map((u: any) => ({
+      ...u,
+      role: u.roles?.name || u.role || 'visualizador',
+    }));
   },
 
   async getUserById(id: string): Promise<User | null> {
-    const user = memoryUsers.find((u) => u.id === id);
-    if (!user) return null;
-    const role = memoryRoles.find((r) => r.id === user.role_id)?.name || user.role;
-    return { ...user, role };
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('users')
+      .select('*, roles(id, name, description)')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return {
+      ...data,
+      role: data.roles?.name || data.role || 'visualizador',
+    };
   },
 
   async getUserByEmail(email: string): Promise<User | null> {
+    const supabase = getSupabase();
     const normalized = email.trim().toLowerCase();
-    const user = memoryUsers.find((u) => u.email.toLowerCase() === normalized);
-    if (!user) return null;
-    const role = memoryRoles.find((r) => r.id === user.role_id)?.name || user.role;
-    return { ...user, role };
+    const { data, error } = await supabase
+      .from('users')
+      .select('*, roles(id, name, description)')
+      .ilike('email', normalized)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return {
+      ...data,
+      role: data.roles?.name || data.role || 'visualizador',
+    };
   },
 
   async createUser(userData: {
@@ -677,30 +90,43 @@ export const dataStore = {
     role: RoleType;
     full_name: string;
   }): Promise<User> {
+    const supabase = getSupabase();
     const normalized = userData.email.trim().toLowerCase();
-    const existing = memoryUsers.find((u) => u.email.toLowerCase() === normalized);
-    if (existing) {
-      throw new Error('El correo electrónico ya se encuentra registrado');
+
+    // Buscar el rol correspondiente
+    const { data: roleData, error: roleError } = await supabase
+      .from('roles')
+      .select('id, name')
+      .eq('name', userData.role)
+      .single();
+
+    if (roleError || !roleData) {
+      throw new Error(`Rol "${userData.role}" no encontrado en base de datos`);
     }
 
-    const roleObj = memoryRoles.find((r) => r.name === userData.role) || memoryRoles[0];
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        email: normalized,
+        password_hash: userData.password_hash,
+        role_id: roleData.id,
+        full_name: userData.full_name,
+        is_active: true,
+      })
+      .select('*, roles(name)')
+      .single();
 
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      email: normalized,
-      password_hash: userData.password_hash,
-      role_id: roleObj.id,
-      role: userData.role,
-      full_name: userData.full_name,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      last_login: null,
+    if (error) {
+      if (error.code === '23505') {
+        throw new Error('El correo electrónico ya se encuentra registrado');
+      }
+      throw new Error(`Error creando usuario: ${error.message}`);
+    }
+
+    return {
+      ...data,
+      role: data.roles?.name || userData.role,
     };
-
-    memoryUsers.unshift(newUser);
-    persistData();
-    return newUser;
   },
 
   async updateUser(
@@ -712,58 +138,84 @@ export const dataStore = {
       is_active?: boolean;
     }
   ): Promise<User> {
-    const index = memoryUsers.findIndex((u) => u.id === id);
-    if (index === -1) throw new Error('Usuario no encontrado');
-
-    const currentUser = memoryUsers[index];
-    let roleId = currentUser.role_id;
-    let role = currentUser.role;
-
-    if (userData.role) {
-      const roleObj = memoryRoles.find((r) => r.name === userData.role);
-      if (roleObj) {
-        roleId = roleObj.id;
-        role = userData.role;
-      }
-    }
-
-    memoryUsers[index] = {
-      ...currentUser,
-      ...(userData.full_name ? { full_name: userData.full_name } : {}),
-      ...(userData.password_hash ? { password_hash: userData.password_hash } : {}),
-      ...(userData.is_active !== undefined ? { is_active: userData.is_active } : {}),
-      role_id: roleId,
-      role,
+    const supabase = getSupabase();
+    const updates: Record<string, any> = {
       updated_at: new Date().toISOString(),
     };
 
-    persistData();
-    return memoryUsers[index];
+    if (userData.full_name !== undefined) updates.full_name = userData.full_name;
+    if (userData.password_hash !== undefined) updates.password_hash = userData.password_hash;
+    if (userData.is_active !== undefined) updates.is_active = userData.is_active;
+
+    if (userData.role) {
+      const { data: roleData } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', userData.role)
+        .single();
+      if (roleData) {
+        updates.role_id = roleData.id;
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', id)
+      .select('*, roles(name)')
+      .single();
+
+    if (error || !data) {
+      throw new Error(`Error actualizando usuario: ${error?.message || 'No encontrado'}`);
+    }
+
+    return {
+      ...data,
+      role: data.roles?.name || data.role,
+    };
   },
 
   async deleteUser(id: string): Promise<boolean> {
-    const index = memoryUsers.findIndex((u) => u.id === id);
-    if (index === -1) throw new Error('Usuario no encontrado');
-    memoryUsers.splice(index, 1);
-    persistData();
+    const supabase = getSupabase();
+    const { error } = await supabase.from('users').delete().eq('id', id);
+    if (error) throw new Error(`Error eliminando usuario: ${error.message}`);
     return true;
   },
 
   async updateLastLogin(id: string): Promise<void> {
-    const index = memoryUsers.findIndex((u) => u.id === id);
-    if (index !== -1) {
-      memoryUsers[index].last_login = new Date().toISOString();
-      persistData();
-    }
+    const supabase = getSupabase();
+    await supabase
+      .from('users')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', id);
   },
 
   // ==========================================
   // AUDIT LOGS
   // ==========================================
   async createAuditLog(log: AuditLog): Promise<AuditLog> {
-    memoryAuditLogs.unshift(log);
-    persistData();
-    return log;
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('audit_logs')
+      .insert({
+        user_id: log.user_id || null,
+        user_email: log.user_email || null,
+        action: log.action,
+        table_name: log.table_name || null,
+        record_id: log.record_id || null,
+        old_values: log.old_values || null,
+        new_values: log.new_values || null,
+        ip_address: log.ip_address || '127.0.0.1',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[AUDIT_ERROR] Error insertando log en Supabase:', error.message);
+      return log;
+    }
+
+    return data;
   },
 
   async getAuditLogs(filters?: {
@@ -773,35 +225,47 @@ export const dataStore = {
     endDate?: string;
     limit?: number;
   }): Promise<AuditLog[]> {
-    let logs = [...memoryAuditLogs];
+    const supabase = getSupabase();
+    let query = supabase
+      .from('audit_logs')
+      .select('*')
+      .order('timestamp', { ascending: false });
 
     if (filters?.userId) {
-      logs = logs.filter((l) => l.user_id === filters.userId || l.user_email === filters.userId);
+      query = query.or(`user_id.eq.${filters.userId},user_email.ilike.%${filters.userId}%`);
     }
     if (filters?.action) {
-      logs = logs.filter((l) => l.action.toLowerCase().includes(filters.action!.toLowerCase()));
+      query = query.ilike('action', `%${filters.action}%`);
     }
     if (filters?.startDate) {
-      const start = new Date(filters.startDate).getTime();
-      logs = logs.filter((l) => new Date(l.timestamp).getTime() >= start);
+      query = query.gte('timestamp', new Date(filters.startDate).toISOString());
     }
     if (filters?.endDate) {
-      const end = new Date(filters.endDate).getTime();
-      logs = logs.filter((l) => new Date(l.timestamp).getTime() <= end);
+      query = query.lte('timestamp', new Date(filters.endDate).toISOString());
     }
-
     if (filters?.limit) {
-      logs = logs.slice(0, filters.limit);
+      query = query.limit(filters.limit);
+    } else {
+      query = query.limit(100);
     }
 
-    return logs;
+    const { data, error } = await query;
+    if (error) throw new Error(`Error obteniendo logs de auditoría: ${error.message}`);
+    return data || [];
   },
 
   // ==========================================
   // CLIENTES
   // ==========================================
   async getClients(): Promise<Client[]> {
-    return memoryClients;
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) throw new Error(`Error obteniendo clientes: ${error.message}`);
+    return data || [];
   },
 
   async searchClients(
@@ -809,78 +273,102 @@ export const dataStore = {
     page: number = 1,
     limit: number = 10
   ): Promise<{ data: Client[]; total: number; page: number; totalPages: number }> {
-    const startTime = performance.now();
-    const cleanQuery = (query || '').trim().toLowerCase();
+    const supabase = getSupabase();
+    const cleanQuery = (query || '').trim();
     const safeLimit = Math.min(50, Math.max(1, limit));
     const safePage = Math.max(1, page);
+    const offset = (safePage - 1) * safeLimit;
 
-    let filtered: Client[];
-    if (!cleanQuery) {
-      filtered = memoryClients;
-    } else {
-      filtered = memoryClients.filter(
-        (c) =>
-          c.name.toLowerCase().includes(cleanQuery) ||
-          c.email.toLowerCase().includes(cleanQuery) ||
-          c.tax_id.toLowerCase().includes(cleanQuery)
-      );
+    let countQuery = supabase.from('clients').select('*', { count: 'exact', head: true });
+    let dataQuery = supabase.from('clients').select('*').order('name');
+
+    if (cleanQuery) {
+      const filter = `name.ilike.%${cleanQuery}%,tax_id.ilike.%${cleanQuery}%,email.ilike.%${cleanQuery}%`;
+      countQuery = countQuery.or(filter);
+      dataQuery = dataQuery.or(filter);
     }
 
-    const total = filtered.length;
+    const [{ count, error: countErr }, { data, error: dataErr }] = await Promise.all([
+      countQuery,
+      dataQuery.range(offset, offset + safeLimit - 1),
+    ]);
+
+    if (countErr || dataErr) {
+      throw new Error(`Error buscando clientes: ${countErr?.message || dataErr?.message}`);
+    }
+
+    const total = count || 0;
     const totalPages = Math.ceil(total / safeLimit) || 1;
-    const offset = (safePage - 1) * safeLimit;
-    const data = filtered.slice(offset, offset + safeLimit);
 
-    const elapsedMs = performance.now() - startTime;
-    console.log(
-      `[PERF] Client search query="${cleanQuery}" page=${safePage} limit=${safeLimit} total=${total} (${elapsedMs.toFixed(2)}ms)`
-    );
-
-    return { data, total, page: safePage, totalPages };
+    return {
+      data: data || [],
+      total,
+      page: safePage,
+      totalPages,
+    };
   },
 
   async getClientById(id: string): Promise<Client | null> {
-    return memoryClients.find((c) => c.id === id) || null;
+    const supabase = getSupabase();
+    const { data, error } = await supabase.from('clients').select('*').eq('id', id).maybeSingle();
+    if (error || !data) return null;
+    return data;
   },
 
   async createClient(clientData: Partial<Client>): Promise<Client> {
-    const newClient: Client = {
-      id: crypto.randomUUID(),
-      name: clientData.name || '',
-      tax_id: clientData.tax_id || '',
-      email: clientData.email || '',
-      phone: clientData.phone || '',
-      address: clientData.address || '',
-      contact_name: clientData.contact_name || '',
-      created_by: clientData.created_by || null,
-      updated_by: clientData.updated_by || null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    memoryClients.unshift(newClient);
-    persistData();
-    return newClient;
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('clients')
+      .insert({
+        name: clientData.name,
+        tax_id: clientData.tax_id,
+        email: clientData.email,
+        phone: clientData.phone || null,
+        address: clientData.address || null,
+        contact_name: clientData.contact_name || null,
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(`Error registrando cliente: ${error.message}`);
+    return data;
   },
 
   async updateClient(id: string, clientData: Partial<Client>): Promise<Client> {
-    const index = memoryClients.findIndex((c) => c.id === id);
-    if (index === -1) throw new Error('Cliente no encontrado');
-    memoryClients[index] = {
-      ...memoryClients[index],
-      ...clientData,
-      updated_at: new Date().toISOString(),
-    };
-    persistData();
-    return memoryClients[index];
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('clients')
+      .update({
+        ...(clientData.name ? { name: clientData.name } : {}),
+        ...(clientData.tax_id ? { tax_id: clientData.tax_id } : {}),
+        ...(clientData.email ? { email: clientData.email } : {}),
+        ...(clientData.phone !== undefined ? { phone: clientData.phone } : {}),
+        ...(clientData.address !== undefined ? { address: clientData.address } : {}),
+        ...(clientData.contact_name !== undefined ? { contact_name: clientData.contact_name } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error || !data) throw new Error(`Error actualizando cliente: ${error?.message || 'No encontrado'}`);
+    return data;
   },
 
   async deleteClient(id: string): Promise<boolean> {
-    const hasTenders = memoryTenders.some((t) => t.client_id === id);
-    if (hasTenders) {
+    const supabase = getSupabase();
+    // Verificar si tiene licitaciones
+    const { count } = await supabase
+      .from('tenders')
+      .select('*', { count: 'exact', head: true })
+      .eq('client_id', id);
+
+    if (count && count > 0) {
       throw new Error('No se puede eliminar un cliente con licitaciones asociadas');
     }
-    memoryClients = memoryClients.filter((c) => c.id !== id);
-    persistData();
+
+    const { error } = await supabase.from('clients').delete().eq('id', id);
+    if (error) throw new Error(`Error eliminando cliente: ${error.message}`);
     return true;
   },
 
@@ -888,55 +376,78 @@ export const dataStore = {
   // PRODUCTOS
   // ==========================================
   async getProducts(): Promise<Product[]> {
-    return memoryProducts;
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('code', { ascending: true });
+
+    if (error) throw new Error(`Error obteniendo catálogo de productos: ${error.message}`);
+    return data || [];
   },
 
   async getProductById(id: string): Promise<Product | null> {
-    return memoryProducts.find((p) => p.id === id) || null;
+    const supabase = getSupabase();
+    const { data, error } = await supabase.from('products').select('*').eq('id', id).maybeSingle();
+    if (error || !data) return null;
+    return data;
   },
 
   async createProduct(productData: Partial<Product>): Promise<Product> {
-    const newProduct: Product = {
-      id: crypto.randomUUID(),
-      code: productData.code || `PRD-${Date.now().toString().slice(-4)}`,
-      name: productData.name || '',
-      description: productData.description || '',
-      unit_price: Number(productData.unit_price) || 0,
-      unit_measure: productData.unit_measure || 'UNIDAD',
-      is_active: productData.is_active !== undefined ? productData.is_active : true,
-      created_by: productData.created_by || null,
-      updated_by: productData.updated_by || null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    memoryProducts.unshift(newProduct);
-    persistData();
-    return newProduct;
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        code: productData.code || `PRD-${Date.now().toString().slice(-4)}`,
+        name: productData.name,
+        description: productData.description || null,
+        unit_price: Number(productData.unit_price) || 0,
+        unit_measure: productData.unit_measure || 'UNIDAD',
+        is_active: productData.is_active !== undefined ? productData.is_active : true,
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(`Error creando producto: ${error.message}`);
+    return data;
   },
 
   async updateProduct(id: string, productData: Partial<Product>): Promise<Product> {
-    const index = memoryProducts.findIndex((p) => p.id === id);
-    if (index === -1) throw new Error('Producto no encontrado');
-    memoryProducts[index] = {
-      ...memoryProducts[index],
-      ...productData,
-      unit_price:
-        productData.unit_price !== undefined
-          ? Number(productData.unit_price)
-          : memoryProducts[index].unit_price,
+    const supabase = getSupabase();
+    const updates: Record<string, any> = {
       updated_at: new Date().toISOString(),
     };
-    persistData();
-    return memoryProducts[index];
+    if (productData.code) updates.code = productData.code;
+    if (productData.name) updates.name = productData.name;
+    if (productData.description !== undefined) updates.description = productData.description;
+    if (productData.unit_price !== undefined) updates.unit_price = Number(productData.unit_price);
+    if (productData.unit_measure) updates.unit_measure = productData.unit_measure;
+    if (productData.is_active !== undefined) updates.is_active = productData.is_active;
+
+    const { data, error } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error || !data) throw new Error(`Error actualizando producto: ${error?.message || 'No encontrado'}`);
+    return data;
   },
 
   async deleteProduct(id: string): Promise<boolean> {
-    const isUsed = memoryItems.some((i) => i.product_id === id);
-    if (isUsed) {
+    const supabase = getSupabase();
+    const { count } = await supabase
+      .from('tender_items')
+      .select('*', { count: 'exact', head: true })
+      .eq('product_id', id);
+
+    if (count && count > 0) {
       throw new Error('No se puede eliminar un producto utilizado en licitaciones existentes');
     }
-    memoryProducts = memoryProducts.filter((p) => p.id !== id);
-    persistData();
+
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) throw new Error(`Error eliminando producto: ${error.message}`);
     return true;
   },
 
@@ -944,35 +455,42 @@ export const dataStore = {
   // LICITACIONES
   // ==========================================
   async getTenders(): Promise<Tender[]> {
-    return memoryTenders.map((tender) => this.populateTender(tender));
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('tenders')
+      .select(`
+        *,
+        client:clients(*),
+        items:tender_items(*, product:products(*)),
+        payments(*),
+        transitions:tender_transitions(*)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Error obteniendo licitaciones: ${error.message}`);
+    return data || [];
   },
 
   async getTenderById(id: string): Promise<Tender | null> {
-    const tender = memoryTenders.find((t) => t.id === id);
-    if (!tender) return null;
-    return this.populateTender(tender);
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('tenders')
+      .select(`
+        *,
+        client:clients(*),
+        items:tender_items(*, product:products(*)),
+        payments(*),
+        transitions:tender_transitions(*)
+      `)
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return data;
   },
 
   populateTender(tender: Tender): Tender {
-    const client = memoryClients.find((c) => c.id === tender.client_id);
-    const items = memoryItems
-      .filter((i) => i.tender_id === tender.id)
-      .map((item) => ({
-        ...item,
-        product: memoryProducts.find((p) => p.id === item.product_id),
-      }));
-    const payments = memoryPayments.filter((p) => p.tender_id === tender.id);
-    const transitions = memoryTransitions
-      .filter((t) => t.tender_id === tender.id)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    return {
-      ...tender,
-      client,
-      items,
-      payments,
-      transitions,
-    };
+    return tender;
   },
 
   async createTender(tenderData: {
@@ -983,55 +501,67 @@ export const dataStore = {
     fecha_limite: string;
     code?: string;
   }): Promise<Tender> {
-    const client = await this.getClientById(tenderData.client_id);
-    if (!client) throw new Error('El cliente seleccionado no existe');
+    const supabase = getSupabase();
 
-    const nextNumber = memoryTenders.length + 1;
-    const generatedCode = tenderData.code || `LIC-2026-${String(nextNumber).padStart(3, '0')}`;
+    // Generar código si no viene
+    let generatedCode = tenderData.code;
+    if (!generatedCode) {
+      const { count } = await supabase.from('tenders').select('*', { count: 'exact', head: true });
+      const nextNumber = (count || 0) + 1;
+      generatedCode = `LIC-2026-${String(nextNumber).padStart(3, '0')}`;
+    }
 
-    const newTender: Tender = {
-      id: crypto.randomUUID(),
-      code: generatedCode,
-      title: tenderData.title,
-      description: tenderData.description || '',
-      client_id: tenderData.client_id,
-      status: 'borrador',
-      presupuesto_maximo: Number(tenderData.presupuesto_maximo),
-      total_estimado: 0.0,
-      fecha_limite: new Date(tenderData.fecha_limite).toISOString(),
-      reminder_sent: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    const { data: newTender, error } = await supabase
+      .from('tenders')
+      .insert({
+        code: generatedCode,
+        title: tenderData.title,
+        description: tenderData.description || '',
+        client_id: tenderData.client_id,
+        status: 'borrador',
+        presupuesto_maximo: Number(tenderData.presupuesto_maximo),
+        total_estimado: 0.0,
+        fecha_limite: new Date(tenderData.fecha_limite).toISOString(),
+        reminder_sent: false,
+      })
+      .select()
+      .single();
 
-    memoryTenders.unshift(newTender);
-    persistData();
+    if (error || !newTender) {
+      throw new Error(`Error creando licitación: ${error?.message || 'Desconocido'}`);
+    }
 
+    // Registrar transición inicial
     await this.logTransition(
       newTender.id,
       'none',
       'borrador',
-      'Admin / Usuario',
+      'Admin / Gestor',
       'Creación inicial de la licitación en estado borrador.'
     );
 
-    return this.populateTender(newTender);
+    return (await this.getTenderById(newTender.id)) || newTender;
   },
 
   async updateTenderProposal(
     id: string,
     fileData: { url: string; name: string; size: number }
   ): Promise<Tender> {
-    const index = memoryTenders.findIndex((t) => t.id === id);
-    if (index === -1) throw new Error('Licitación no encontrada');
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from('tenders')
+      .update({
+        proposal_file_url: fileData.url,
+        proposal_file_name: fileData.name,
+        proposal_file_size: fileData.size,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
 
-    memoryTenders[index].proposal_file_url = fileData.url;
-    memoryTenders[index].proposal_file_name = fileData.name;
-    memoryTenders[index].proposal_file_size = fileData.size;
-    memoryTenders[index].updated_at = new Date().toISOString();
-
-    persistData();
-    return this.populateTender(memoryTenders[index]);
+    if (error) throw new Error(`Error actualizando propuesta: ${error.message}`);
+    const tender = await this.getTenderById(id);
+    if (!tender) throw new Error('Licitación no encontrada');
+    return tender;
   },
 
   // ==========================================
@@ -1042,90 +572,106 @@ export const dataStore = {
     productId: string,
     quantity: number
   ): Promise<{ item: TenderItem; tender: Tender }> {
-    const tender = memoryTenders.find((t) => t.id === tenderId);
+    const supabase = getSupabase();
+    const tender = await this.getTenderById(tenderId);
     if (!tender) throw new Error('Licitación no encontrada');
 
     if (['finalizada', 'por_cobrar', 'cobrada', 'perdida'].includes(tender.status)) {
       throw new Error(`No se permite modificar productos en licitaciones con estado "${tender.status}"`);
     }
 
-    const product = memoryProducts.find((p) => p.id === productId);
+    const product = await this.getProductById(productId);
     if (!product) throw new Error('Producto no encontrado');
 
-    const itemSubtotal = quantity * product.unit_price;
-    const currentTotal = memoryItems
-      .filter((i) => i.tender_id === tenderId)
-      .reduce((sum, i) => sum + i.subtotal, 0);
-
+    const itemSubtotal = quantity * Number(product.unit_price);
+    const currentItems = tender.items || [];
+    const currentTotal = currentItems.reduce((sum, i) => sum + Number(i.subtotal), 0);
     const projectedTotal = currentTotal + itemSubtotal;
 
-    if (projectedTotal > tender.presupuesto_maximo) {
+    if (projectedTotal > Number(tender.presupuesto_maximo)) {
       throw new Error(
         `El monto total proyectado ($${projectedTotal.toFixed(2)}) supera el presupuesto máximo permitido ($${Number(tender.presupuesto_maximo).toFixed(2)})`
       );
     }
 
-    const newItem: TenderItem = {
-      id: crypto.randomUUID(),
-      tender_id: tenderId,
-      product_id: productId,
-      quantity,
-      unit_price: product.unit_price,
-      subtotal: itemSubtotal,
-      created_at: new Date().toISOString(),
-      product,
-    };
+    // Insertar o actualizar item
+    const existingItem = currentItems.find((i) => i.product_id === productId);
+    let insertedItem: any;
 
-    const existingIndex = memoryItems.findIndex(
-      (i) => i.tender_id === tenderId && i.product_id === productId
-    );
-
-    if (existingIndex !== -1) {
-      const updatedQuantity = memoryItems[existingIndex].quantity + quantity;
-      const updatedSubtotal = updatedQuantity * product.unit_price;
-      const newCalculatedTotal = currentTotal - memoryItems[existingIndex].subtotal + updatedSubtotal;
-
-      if (newCalculatedTotal > tender.presupuesto_maximo) {
-        throw new Error(
-          `Al actualizar la cantidad, el total ($${newCalculatedTotal.toFixed(2)}) supera el presupuesto máximo permitido ($${Number(tender.presupuesto_maximo).toFixed(2)})`
-        );
-      }
-
-      memoryItems[existingIndex].quantity = updatedQuantity;
-      memoryItems[existingIndex].subtotal = updatedSubtotal;
-      tender.total_estimado = newCalculatedTotal;
+    if (existingItem) {
+      const newQty = Number(existingItem.quantity) + quantity;
+      const newSub = newQty * Number(product.unit_price);
+      const { data, error } = await supabase
+        .from('tender_items')
+        .update({ quantity: newQty, subtotal: newSub })
+        .eq('id', existingItem.id)
+        .select('*, product:products(*)')
+        .single();
+      if (error) throw new Error(`Error actualizando ítem: ${error.message}`);
+      insertedItem = data;
     } else {
-      memoryItems.push(newItem);
-      tender.total_estimado = projectedTotal;
+      const { data, error } = await supabase
+        .from('tender_items')
+        .insert({
+          tender_id: tenderId,
+          product_id: productId,
+          quantity,
+          unit_price: product.unit_price,
+          subtotal: itemSubtotal,
+        })
+        .select('*, product:products(*)')
+        .single();
+      if (error) throw new Error(`Error agregando ítem: ${error.message}`);
+      insertedItem = data;
     }
 
-    tender.updated_at = new Date().toISOString();
-    persistData();
-    return { item: newItem, tender: this.populateTender(tender) };
+    // Recalcular total estimado en la licitación
+    const { data: allItems } = await supabase
+      .from('tender_items')
+      .select('subtotal')
+      .eq('tender_id', tenderId);
+
+    const newEstimatedTotal = (allItems || []).reduce((sum, i) => sum + Number(i.subtotal), 0);
+    await supabase
+      .from('tenders')
+      .update({ total_estimado: newEstimatedTotal, updated_at: new Date().toISOString() })
+      .eq('id', tenderId);
+
+    const updatedTender = await this.getTenderById(tenderId);
+    return { item: insertedItem, tender: updatedTender! };
   },
 
   async removeItemFromTender(tenderId: string, itemId: string): Promise<Tender> {
-    const tender = memoryTenders.find((t) => t.id === tenderId);
+    const supabase = getSupabase();
+    const tender = await this.getTenderById(tenderId);
     if (!tender) throw new Error('Licitación no encontrada');
 
     if (['finalizada', 'por_cobrar', 'cobrada', 'perdida'].includes(tender.status)) {
       throw new Error(`No se permite modificar productos en licitaciones con estado "${tender.status}"`);
     }
 
-    const itemIndex = memoryItems.findIndex((i) => i.id === itemId && i.tender_id === tenderId);
-    if (itemIndex === -1) throw new Error('Ítem no encontrado en la licitación');
+    const { error } = await supabase
+      .from('tender_items')
+      .delete()
+      .eq('id', itemId)
+      .eq('tender_id', tenderId);
 
-    memoryItems.splice(itemIndex, 1);
+    if (error) throw new Error(`Error eliminando ítem: ${error.message}`);
 
-    const newTotal = memoryItems
-      .filter((i) => i.tender_id === tenderId)
-      .reduce((sum, i) => sum + i.subtotal, 0);
+    // Recalcular total estimado
+    const { data: allItems } = await supabase
+      .from('tender_items')
+      .select('subtotal')
+      .eq('tender_id', tenderId);
 
-    tender.total_estimado = newTotal;
-    tender.updated_at = new Date().toISOString();
-    persistData();
+    const newEstimatedTotal = (allItems || []).reduce((sum, i) => sum + Number(i.subtotal), 0);
+    await supabase
+      .from('tenders')
+      .update({ total_estimado: newEstimatedTotal, updated_at: new Date().toISOString() })
+      .eq('id', tenderId);
 
-    return this.populateTender(tender);
+    const updatedTender = await this.getTenderById(tenderId);
+    return updatedTender!;
   },
 
   // ==========================================
@@ -1137,12 +683,11 @@ export const dataStore = {
     userName: string = 'Usuario',
     notes?: string
   ): Promise<Tender> {
-    const index = memoryTenders.findIndex((t) => t.id === tenderId);
-    if (index === -1) throw new Error('Licitación no encontrada');
+    const supabase = getSupabase();
+    const tender = await this.getTenderById(tenderId);
+    if (!tender) throw new Error('Licitación no encontrada');
 
-    const tender = memoryTenders[index];
     const previousStatus = tender.status;
-
     const allowed = VALID_TRANSITIONS[previousStatus] || [];
     if (!allowed.includes(newStatus)) {
       throw new Error(
@@ -1158,13 +703,17 @@ export const dataStore = {
       }
     }
 
-    tender.status = newStatus;
-    tender.updated_at = new Date().toISOString();
-    persistData();
+    const { error } = await supabase
+      .from('tenders')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', tenderId);
+
+    if (error) throw new Error(`Error actualizando estado en Supabase: ${error.message}`);
 
     await this.logTransition(tenderId, previousStatus, newStatus, userName, notes);
 
-    return this.populateTender(tender);
+    const updated = await this.getTenderById(tenderId);
+    return updated!;
   },
 
   // ==========================================
@@ -1176,7 +725,8 @@ export const dataStore = {
     reference?: string,
     userName: string = 'Usuario'
   ): Promise<{ payment: Payment; tender: Tender; autoCobrada: boolean }> {
-    const tender = memoryTenders.find((t) => t.id === tenderId);
+    const supabase = getSupabase();
+    const tender = await this.getTenderById(tenderId);
     if (!tender) throw new Error('Licitación no encontrada');
 
     if (tender.status !== 'por_cobrar') {
@@ -1189,11 +739,8 @@ export const dataStore = {
       throw new Error('El monto del pago debe ser mayor a 0');
     }
 
-    const previousPaymentsSum = memoryPayments
-      .filter((p) => p.tender_id === tenderId)
-      .reduce((sum, p) => sum + Number(p.amount), 0);
-
-    const pendingBalance = tender.total_estimado - previousPaymentsSum;
+    const previousPaymentsSum = (tender.payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+    const pendingBalance = Number(tender.total_estimado) - previousPaymentsSum;
 
     if (amount > pendingBalance + 0.01) {
       throw new Error(
@@ -1201,24 +748,31 @@ export const dataStore = {
       );
     }
 
-    const newPayment: Payment = {
-      id: crypto.randomUUID(),
-      tender_id: tenderId,
-      amount,
-      payment_date: new Date().toISOString().split('T')[0],
-      reference: reference || 'Abono / Pago registrado',
-      created_at: new Date().toISOString(),
-    };
+    const { data: newPayment, error: payError } = await supabase
+      .from('payments')
+      .insert({
+        tender_id: tenderId,
+        amount,
+        payment_date: new Date().toISOString().split('T')[0],
+        reference: reference || 'Abono / Pago registrado',
+      })
+      .select()
+      .single();
 
-    memoryPayments.push(newPayment);
+    if (payError || !newPayment) {
+      throw new Error(`Error registrando pago en Supabase: ${payError?.message}`);
+    }
 
     const newTotalPaid = previousPaymentsSum + amount;
-    const newRemainingBalance = tender.total_estimado - newTotalPaid;
+    const newRemainingBalance = Number(tender.total_estimado) - newTotalPaid;
 
     let autoCobrada = false;
     if (newRemainingBalance <= 0.01) {
-      tender.status = 'cobrada';
-      tender.updated_at = new Date().toISOString();
+      await supabase
+        .from('tenders')
+        .update({ status: 'cobrada', updated_at: new Date().toISOString() })
+        .eq('id', tenderId);
+
       autoCobrada = true;
 
       await this.logTransition(
@@ -1230,11 +784,11 @@ export const dataStore = {
       );
     }
 
-    persistData();
+    const updatedTender = await this.getTenderById(tenderId);
 
     return {
       payment: newPayment,
-      tender: this.populateTender(tender),
+      tender: updatedTender!,
       autoCobrada,
     };
   },
@@ -1249,21 +803,34 @@ export const dataStore = {
     userName: string,
     notes?: string
   ): Promise<TenderTransition> {
-    const transition: TenderTransition = {
-      id: crypto.randomUUID(),
-      tender_id: tenderId,
-      previous_status: previousStatus,
-      new_status: newStatus,
-      user_name: userName,
-      notes: notes || null,
-      created_at: new Date().toISOString(),
-    };
-    memoryTransitions.unshift(transition);
-    persistData();
-    return transition;
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('tender_transitions')
+      .insert({
+        tender_id: tenderId,
+        previous_status: previousStatus,
+        new_status: newStatus,
+        user_name: userName,
+        notes: notes || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[TRANSITION_ERROR] Error registrando transición en Supabase:', error.message);
+    }
+
+    return data;
   },
 
   async getAllTransitions(): Promise<TenderTransition[]> {
-    return memoryTransitions;
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('tender_transitions')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Error obteniendo transiciones: ${error.message}`);
+    return data || [];
   },
 };
