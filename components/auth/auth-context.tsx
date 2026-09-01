@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { RoleType } from '@/lib/types/database';
 
 export interface AuthUser {
@@ -25,27 +25,53 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // true hasta leer localStorage
   const router = useRouter();
+  const pathname = usePathname();
 
-  // Restaurar sesión al cargar
+  // ── 1. Restaurar sesión desde localStorage al montar ──────────────────────
   useEffect(() => {
-    const savedToken = localStorage.getItem('csc_access_token');
-    const savedUser = localStorage.getItem('csc_user');
+    try {
+      const savedToken = localStorage.getItem('csc_access_token');
+      const savedUser  = localStorage.getItem('csc_user');
 
-    if (savedToken && savedUser) {
-      try {
+      if (savedToken && savedUser) {
         setToken(savedToken);
         setUser(JSON.parse(savedUser));
-      } catch {
-        localStorage.removeItem('csc_access_token');
-        localStorage.removeItem('csc_user');
+      } else {
+        setUser(null);
+        setToken(null);
       }
+    } catch {
+      localStorage.removeItem('csc_access_token');
+      localStorage.removeItem('csc_user');
+      setUser(null);
+      setToken(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+  // ── 2. Guardia de redirección (después de que cargue) ─────────────────────
+  useEffect(() => {
+    if (loading) return;
+
+    const isLoginPage = pathname === '/login';
+
+    if (!user && !isLoginPage) {
+      // No autenticado → enviar a login
+      router.replace('/login');
+    } else if (user && isLoginPage) {
+      // Ya autenticado → no debe estar en login
+      router.replace('/');
+    }
+  }, [user, loading, pathname, router]);
+
+  // ── 3. Login ───────────────────────────────────────────────────────────────
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; message?: string }> => {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -64,10 +90,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const accessToken = data.data.accessToken;
       const authUser: AuthUser = {
-        id: data.data.user.id,
-        email: data.data.user.email,
+        id:       data.data.user.id,
+        email:    data.data.user.email,
         fullName: data.data.user.fullName || data.data.user.email,
-        role: data.data.user.role,
+        role:     data.data.user.role,
       };
 
       setToken(accessToken);
@@ -76,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('csc_user', JSON.stringify(authUser));
 
       return { success: true };
-    } catch (err: any) {
+    } catch {
       return {
         success: false,
         message: 'No se pudo conectar con el servidor de autenticación.',
@@ -84,55 +110,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ── 4. Logout ──────────────────────────────────────────────────────────────
   const logout = async () => {
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-    } catch (err) {
-      console.error('Error al cerrar sesión:', err);
+    } catch {
+      // ignorar errores de red en logout
     } finally {
       setUser(null);
       setToken(null);
       localStorage.removeItem('csc_access_token');
       localStorage.removeItem('csc_user');
-      router.push('/login');
+      router.replace('/login');
     }
   };
 
-  // Helper para hacer llamadas autenticadas con el header Authorization
+  // ── 5. authFetch ───────────────────────────────────────────────────────────
   const authFetch = async (url: string, init?: RequestInit): Promise<Response> => {
     const headers = new Headers(init?.headers || {});
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
-    return fetch(url, {
-      ...init,
-      headers,
-    });
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+    return fetch(url, { ...init, headers });
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        loading,
-        login,
-        logout,
-        authFetch,
-      }}
-    >
+    <AuthContext.Provider value={{ user, token, loading, login, logout, authFetch }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth debe usarse dentro de un AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth debe usarse dentro de un AuthProvider');
+  return ctx;
 }
