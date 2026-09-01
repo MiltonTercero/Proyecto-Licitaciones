@@ -1,4 +1,4 @@
-# 🏛️ Sistema de Gestión de Licitaciones Comerciales (CSC)
+#  Sistema de Gestión de Licitaciones Comerciales (CSC)
 
 Sistema web integral y moderno para la gestión del ciclo de vida de licitaciones comerciales, cotizaciones técnicas, control presupuestario, notificaciones automáticas y cobranza.
 
@@ -6,7 +6,7 @@ Desarrollado con **Next.js 16 (App Router)**, **Supabase (PostgreSQL, RLS y Stor
 
 ---
 
-## 🎯 Principios de Interacción Humano-Computadora (HCI) Aplicados
+##  Principios de Interacción Humano-Computadora (HCI) Aplicados
 
 Diseñado especialmente para la facilidad de uso de operadores y ejecutivos comerciales sin experiencia técnica compleja:
 
@@ -25,7 +25,7 @@ Diseñado especialmente para la facilidad de uso de operadores y ejecutivos come
 
 ---
 
-## 🏗️ Arquitectura y Tecnologías
+##  Arquitectura y Tecnologías
 
 - **Frontend**: Next.js 16 (App Router, Server & Client Components), React 19, Tailwind CSS 4, Lucide Icons.
 - **Backend & APIs**: Next.js Route Handlers (`/api/tenders`, `/api/clients`, `/api/products`, `/api/cron`, etc.).
@@ -36,7 +36,7 @@ Diseñado especialmente para la facilidad de uso de operadores y ejecutivos come
 
 ---
 
-## 📊 Máquina de Estados y Reglas de Negocio
+##  Máquina de Estados y Reglas de Negocio
 
 ```
    [ Borrador ]
@@ -63,7 +63,7 @@ Diseñado especialmente para la facilidad de uso de operadores y ejecutivos come
 
 ---
 
-## 🚀 Instalación y Ejecución Local
+##  Instalación y Ejecución Local
 
 ### 1. Clonar el repositorio e instalar dependencias:
 ```bash
@@ -81,29 +81,22 @@ cp .env.example .env.local
 Configura tus credenciales en `.env.local`:
 ```env
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
-SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key
+NEXT_PUBLIC_SUPABASE_URL=https: #######
+NEXT_PUBLIC_SUPABASE_ANON_KEY=#######
+SUPABASE_SERVICE_ROLE_KEY=####
 
 # Resend Email
-RESEND_API_KEY=re_tu_api_key_aqui
-RESEND_FROM_EMAIL=Licitaciones CSC <onboarding@resend.dev>
+RESEND_API_KEY=############
+RESEND_FROM_EMAIL=#########
 
 # Vercel Cron
-CRON_SECRET=tu-token-seguro-de-cron
+CRON_SECRET=##############
 
 # URL de la Aplicación
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-> **Nota de Evaluación**: Si se ejecuta sin credenciales de Supabase/Resend, el sistema cuenta con un motor reactivo de memoria pre-cargado con datos de prueba realistas para permitir probar inmediatamente el 100% de la funcionalidad.
-
-### 3. Configuración de Base de Datos en Supabase (Opcional si usas Supabase en la nube):
-1. Abre el **SQL Editor** en tu panel de Supabase.
-2. Copia y ejecuta el contenido de `supabase/schema.sql`.
-3. Para insertar datos iniciales, ejecuta el contenido de `supabase/seed.sql`.
-
-### 4. Iniciar el servidor de desarrollo:
+### 3. Iniciar el servidor de desarrollo:
 ```bash
 npm run dev
 ```
@@ -111,20 +104,6 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ---
 
-## ⏰ Configuración de Vercel Cron Jobs
-
-El proyecto incluye el archivo `vercel.json` configurado para ejecutar la revisión horaria de vencimientos:
-
-```json
-{
-  "crons": [
-    {
-      "path": "/api/cron/check-deadlines",
-      "schedule": "0 * * * *"
-    }
-  ]
-}
-```
 
 ### Prueba Manual del Cron Job:
 En el Dashboard principal hay un botón interactivo **"Probar Vercel Cron Job"** que ejecuta `/api/cron/check-deadlines?manual=true` y muestra el log en vivo de licitaciones auto-expiradas y recordatorios de 48h enviados.
@@ -149,12 +128,4 @@ En el Dashboard principal hay un botón interactivo **"Probar Vercel Cron Job"**
 
 ---
 
-## 🧪 Pruebas del Flujo Completo
 
-1. **Creación**: Ir a `/licitaciones/nueva` y crear una licitación con \$30,000 de presupuesto.
-2. **Validación de Presupuesto**: Añadir productos en el Paso 2; verificar que la barra bloquea si se supera el presupuesto.
-3. **Subida y Envío**: Adjuntar el PDF de propuesta y hacer clic en **"Guardar y Enviar al Cliente"**.
-4. **Adjudicación**: En la vista de detalle, marcar como **"Ganada (Finalizada)"**.
-5. **Facturación**: Pasar a **"Por Cobrar"**.
-6. **Cobranza**: Registrar pagos parciales. Registrar el pago final y comprobar que pasa automáticamente a **"Cobrada"**.
-7. **Auditoría**: Revisar la pestaña **"Historial y Auditoría"** para comprobar el registro de cada cambio.
