@@ -4,7 +4,13 @@ Sistema web integral y moderno para la gestión del ciclo de vida de licitacione
 
 Desarrollado con **Next.js 16 (App Router)**, **Supabase (PostgreSQL, RLS y Storage)**, **Resend (Emails transaccionales con adjuntos reales)** y **Vercel Cron Jobs (Automatización de vencimientos y recordatorios)**.
 
----
+<img width="677" height="455" alt="image" src="https://github.com/user-attachments/assets/88755f9e-51f5-46e4-93bc-fcdcc0302bbc" />
+
+<img width="937" height="451" alt="image" src="https://github.com/user-attachments/assets/33c07459-de11-4cd8-9979-514b45457cec" />
+
+<img width="950" height="453" alt="image" src="https://github.com/user-attachments/assets/1267e7d1-f8d7-4e78-ac7c-c91e693b86ca" />
+
+
 
 ##  Principios de Interacción Humano-Computadora (HCI) Aplicados
 
