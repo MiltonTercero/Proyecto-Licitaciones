@@ -60,7 +60,7 @@ Diseñado especialmente para la facilidad de uso de operadores y ejecutivos come
 ```
 
 ### Reglas de Negocio Implementadas:
-1. **Presupuesto Máximo**: $\sum (\text{cantidad} \times \text{precio\_unitario}) \le \text{presupuesto\_maximo}$.
+1. **Presupuesto Máximo**: EL sistema calcula automáticamente la diferencia entre el presupuesto máximo permitido y el valor de ´productos agregados a la licitación.
 2. **Envío y Activación**: Requiere documento de propuesta adjunto. Envía correo formal al cliente con resumen y documento adjunto.
 3. **Vencimiento Automático (Vercel Cron)**: Si `fecha_limite < NOW()` y sigue en `activa`, transiciona automáticamente a `perdida`.
 4. **Recordatorio 48h (Vercel Cron)**: Si faltan menos de 48 horas para la `fecha_limite` y no se ha recordado, envía correo de alerta al cliente.
