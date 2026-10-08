@@ -4,7 +4,13 @@ Sistema web integral y moderno para la gestión del ciclo de vida de licitacione
 
 Desarrollado con **Next.js 16 (App Router)**, **Supabase (PostgreSQL, RLS y Storage)**, **Resend (Emails transaccionales con adjuntos reales)** y **Vercel Cron Jobs (Automatización de vencimientos y recordatorios)**.
 
----
+<img width="677" height="455" alt="image" src="https://github.com/user-attachments/assets/88755f9e-51f5-46e4-93bc-fcdcc0302bbc" />
+
+<img width="937" height="451" alt="image" src="https://github.com/user-attachments/assets/33c07459-de11-4cd8-9979-514b45457cec" />
+
+<img width="950" height="453" alt="image" src="https://github.com/user-attachments/assets/1267e7d1-f8d7-4e78-ac7c-c91e693b86ca" />
+
+
 
 ##  Principios de Interacción Humano-Computadora (HCI) Aplicados
 
@@ -54,7 +60,7 @@ Diseñado especialmente para la facilidad de uso de operadores y ejecutivos come
 ```
 
 ### Reglas de Negocio Implementadas:
-1. **Presupuesto Máximo**: $\sum (\text{cantidad} \times \text{precio\_unitario}) \le \text{presupuesto\_maximo}$.
+1. **Presupuesto Máximo**: EL sistema calcula automáticamente la diferencia entre el presupuesto máximo permitido y el valor de ´productos agregados a la licitación.
 2. **Envío y Activación**: Requiere documento de propuesta adjunto. Envía correo formal al cliente con resumen y documento adjunto.
 3. **Vencimiento Automático (Vercel Cron)**: Si `fecha_limite < NOW()` y sigue en `activa`, transiciona automáticamente a `perdida`.
 4. **Recordatorio 48h (Vercel Cron)**: Si faltan menos de 48 horas para la `fecha_limite` y no se ha recordado, envía correo de alerta al cliente.
