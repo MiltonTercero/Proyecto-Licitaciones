@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
   try {
     // RBAC: Solo Admin puede crear productos
-    const auth = requireAuth(request, ['admin']);
+    const auth = await requireAuth(request, ['admin']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const body = await request.json();

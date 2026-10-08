@@ -6,6 +6,9 @@ import { getClientIp } from '@/lib/auth/rate-limiter';
 
 export async function GET(req: Request) {
   try {
+    const auth = await requireAuth(req);
+    if (auth.errorResponse) return auth.errorResponse;
+
     const clients = await dataStore.getClients();
     return NextResponse.json({ success: true, data: clients });
   } catch (error: any) {
@@ -21,7 +24,7 @@ export async function POST(req: Request) {
 
   try {
     // RBAC: Admin y Gestor pueden crear clientes
-    const auth = requireAuth(req, ['admin', 'gestor']);
+    const auth = await requireAuth(req, ['admin', 'gestor']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const body = await req.json();

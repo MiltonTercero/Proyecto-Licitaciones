@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Leer preferencia guardada o del sistema al montar
   useEffect(() => {
-    const stored = localStorage.getItem('csc-theme') as Theme | null;
+    const stored = localStorage.getItem('mt-theme') as Theme | null;
     if (stored === 'dark' || stored === 'light') {
       setThemeState(stored);
     } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -36,7 +36,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('csc-theme', theme);
+    localStorage.setItem('mt-theme', theme);
   }, [theme, mounted]);
 
   const toggleTheme = () => {

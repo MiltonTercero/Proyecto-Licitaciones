@@ -120,7 +120,7 @@ export default function LoginPage() {
                 <input
                   id="email"
                   type="email"
-                  placeholder="admin@csc.com"
+                  placeholder="admin@mt.com"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -210,7 +210,7 @@ export default function LoginPage() {
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => handleQuickFill('admin@csc.com', 'Admin123!')}
+                onClick={() => handleQuickFill('admin@mt.com', 'Admin123!')}
                 className="p-2 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800 rounded-xl text-center transition-colors cursor-pointer"
               >
                 <span className="block text-[11px] font-bold text-blue-700 dark:text-blue-300">
@@ -221,7 +221,7 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => handleQuickFill('gestor@csc.com', 'Gestor123!')}
+                onClick={() => handleQuickFill('gestor@mt.com', 'Gestor123!')}
                 className="p-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 rounded-xl text-center transition-colors cursor-pointer"
               >
                 <span className="block text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
@@ -232,7 +232,7 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => handleQuickFill('visualizador@csc.com', 'Visual123!')}
+                onClick={() => handleQuickFill('visualizador@mt.com', 'Visual123!')}
                 className="p-2 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50 border border-purple-200 dark:border-purple-800 rounded-xl text-center transition-colors cursor-pointer"
               >
                 <span className="block text-[11px] font-bold text-purple-700 dark:text-purple-300">

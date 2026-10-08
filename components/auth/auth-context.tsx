@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); // true hasta leer localStorage
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -35,8 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function checkSession() {
       try {
-        const savedToken = sessionStorage.getItem('csc_access_token') || localStorage.getItem('csc_access_token');
-        const savedUser  = sessionStorage.getItem('csc_user') || localStorage.getItem('csc_user');
+        const savedToken = sessionStorage.getItem('mt_access_token') || localStorage.getItem('mt_access_token');
+        const savedUser  = sessionStorage.getItem('mt_user') || localStorage.getItem('mt_user');
 
         if (savedToken && savedUser) {
           if (isMounted) {
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const meData = await meRes.json();
           if (meData.success && meData.data && isMounted) {
             setUser(meData.data);
-            sessionStorage.setItem('csc_user', JSON.stringify(meData.data));
+            sessionStorage.setItem('mt_user', JSON.stringify(meData.data));
             setLoading(false);
             return;
           }
@@ -89,10 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isLoginPage = pathname === '/login';
 
     if (!user && !isLoginPage) {
-      // No autenticado → enviar a login
       router.replace('/login');
     } else if (user && isLoginPage) {
-      // Ya autenticado → no debe estar en login
       router.replace('/');
     }
   }, [user, loading, pathname, router]);
@@ -128,11 +126,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setToken(accessToken);
       setUser(authUser);
-      sessionStorage.setItem('csc_access_token', accessToken);
-      sessionStorage.setItem('csc_user', JSON.stringify(authUser));
-      // Limpiar remanentes de localStorage
-      localStorage.removeItem('csc_access_token');
-      localStorage.removeItem('csc_user');
+      sessionStorage.setItem('mt_access_token', accessToken);
+      sessionStorage.setItem('mt_user', JSON.stringify(authUser));
+      localStorage.removeItem('mt_access_token');
+      localStorage.removeItem('mt_user');
 
       return { success: true };
     } catch {
@@ -155,10 +152,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setUser(null);
       setToken(null);
-      sessionStorage.removeItem('csc_access_token');
-      sessionStorage.removeItem('csc_user');
-      localStorage.removeItem('csc_access_token');
-      localStorage.removeItem('csc_user');
+      sessionStorage.removeItem('mt_access_token');
+      sessionStorage.removeItem('mt_user');
+      localStorage.removeItem('mt_access_token');
+      localStorage.removeItem('mt_user');
       router.replace('/login');
     }
   };

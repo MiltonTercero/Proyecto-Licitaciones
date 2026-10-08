@@ -31,7 +31,7 @@ export async function PUT(
 
   try {
     // RBAC: Solo Admin puede modificar productos
-    const auth = requireAuth(request, ['admin']);
+    const auth = await requireAuth(request, ['admin']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const { id } = await props.params;
@@ -78,7 +78,7 @@ export async function DELETE(
 
   try {
     // RBAC: Solo Admin puede eliminar productos
-    const auth = requireAuth(_request, ['admin']);
+    const auth = await requireAuth(_request, ['admin']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const { id } = await props.params;

@@ -105,7 +105,7 @@ export function Sidebar() {
             </div>
             <div>
               <h1 className="text-base font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-none">
-                CSC Licitaciones
+                MT Licitaciones
               </h1>
               <p className="text-xs text-zinc-500 mt-1 font-medium">
                 Gestión Comercial & Control
@@ -193,7 +193,7 @@ export function Sidebar() {
         {/* Footer (Fijo abajo) */}
         <div className="p-5 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80 flex items-center justify-between text-xs text-zinc-500 shrink-0">
           <div>
-            <p className="font-semibold text-zinc-700 dark:text-zinc-300">CSC Licitaciones v1.0</p>
+            <p className="font-semibold text-zinc-700 dark:text-zinc-300">MT Licitaciones v1.0</p>
             {user && (
               <p className="text-[10px] mt-0.5">
                 Sesión:{' '}

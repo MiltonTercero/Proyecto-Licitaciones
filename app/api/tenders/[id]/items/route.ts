@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { dataStore } from '@/lib/storage/store';
+import { requireAuth } from '@/lib/auth/middleware';
 
 export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth(request, ['admin', 'gestor']);
+    if (auth.errorResponse) return auth.errorResponse;
+
     const { id } = await context.params;
     const body = await request.json();
     const { product_id, quantity } = body;
@@ -30,6 +34,9 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth(request, ['admin', 'gestor']);
+    if (auth.errorResponse) return auth.errorResponse;
+
     const { id } = await context.params;
     const { searchParams } = new URL(request.url);
     const itemId = searchParams.get('itemId');

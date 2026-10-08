@@ -6,7 +6,7 @@ const resendApiKey = process.env.RESEND_API_KEY || '';
 const isResendActive = Boolean(resendApiKey && resendApiKey.startsWith('re_') && !resendApiKey.includes('demo_key'));
 
 export const resendClient = isResendActive ? new Resend(resendApiKey) : null;
-const fromEmail = process.env.RESEND_FROM_EMAIL || 'Licitaciones CSC <onboarding@resend.dev>';
+const fromEmail = process.env.RESEND_FROM_EMAIL || 'Licitaciones MT <onboarding@resend.dev>';
 
 export interface SendEmailResult {
   success: boolean;

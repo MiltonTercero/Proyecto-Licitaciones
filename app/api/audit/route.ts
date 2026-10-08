@@ -5,7 +5,7 @@ import { dataStore } from '@/lib/storage/store';
 export async function GET(req: Request) {
   try {
     // RBAC: Solo Admin puede ver auditoría del sistema
-    const auth = requireAuth(req, ['admin']);
+    const auth = await requireAuth(req, ['admin']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const { searchParams } = new URL(req.url);

@@ -77,7 +77,11 @@ export const dataStore = {
       .ilike('email', normalized)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      console.error(`[dataStore.getUserByEmail] Error consultando Supabase:`, error);
+      throw error;
+    }
+    if (!data) return null;
     return {
       ...data,
       role: data.roles?.name || data.role || 'visualizador',

@@ -50,7 +50,7 @@ export function generateProposalEmailHtml({
       
       <!-- Header -->
       <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); padding: 32px 24px; text-align: center; color: #ffffff;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em;">CONSULTORÍA Y SOLUCIONES CABALLERO</h1>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em;">MT LICITACIONES</h1>
         <p style="margin: 8px 0 0; font-size: 14px; opacity: 0.9;">Presentación Oficial de Propuesta Técnico-Comercial</p>
       </div>
 
@@ -133,7 +133,7 @@ export function generateProposalEmailHtml({
 
       <!-- Footer -->
       <div style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; padding: 20px 24px; text-align: center; font-size: 12px; color: #9ca3af;">
-        <p style="margin: 0 0 4px;">Sistema de Gestión de Licitaciones • Consultoría y Soluciones Caballero</p>
+        <p style="margin: 0 0 4px;">Sistema de Gestión de Licitaciones • MT</p>
         <p style="margin: 0;">Este es un correo transaccional generado automáticamente.</p>
       </div>
     </div>
@@ -217,7 +217,7 @@ export function generateReminderEmailHtml({
 
       <!-- Footer -->
       <div style="background-color: #f9fafb; border-top: 1px solid #fee2e2; padding: 16px 24px; text-align: center; font-size: 12px; color: #9ca3af;">
-        <p style="margin: 0;">Consultoría y Soluciones Caballero • Alerta Programada de Vencimiento</p>
+        <p style="margin: 0;">MT • Alerta Programada de Vencimiento</p>
       </div>
     </div>
   </body>

@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/components/layout/theme-context';
 import { AppShell } from '@/components/layout/app-shell';
 
 export const metadata: Metadata = {
-  title: 'Sistema de Gestión de Licitaciones - CSC',
+  title: 'Sistema de Gestión de Licitaciones - MT',
   description:
     'Sistema web de gestión de licitaciones comerciales con Next.js, Supabase, Resend y Vercel Cron Jobs',
 };

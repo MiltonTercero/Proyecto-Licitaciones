@@ -31,7 +31,7 @@ export async function PUT(
 
   try {
     // RBAC: Admin y Gestor pueden editar clientes
-    const auth = requireAuth(request, ['admin', 'gestor']);
+    const auth = await requireAuth(request, ['admin', 'gestor']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const { id } = await props.params;
@@ -78,7 +78,7 @@ export async function DELETE(
 
   try {
     // RBAC: ÚNICAMENTE Admin puede eliminar clientes (Gestor y Visualizador reciben 403 Forbidden)
-    const auth = requireAuth(_request, ['admin']);
+    const auth = await requireAuth(_request, ['admin']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const { id } = await props.params;

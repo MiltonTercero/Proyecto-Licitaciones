@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import { dataStore } from '@/lib/storage/store';
 import { sendFormalProposalEmail } from '@/lib/email/resend';
+import { requireAuth } from '@/lib/auth/middleware';
 
 export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth(request, ['admin', 'gestor']);
+    if (auth.errorResponse) return auth.errorResponse;
+
     const { id } = await context.params;
     const body = await request.json().catch(() => ({}));
     const userName = body.userName || 'Admin Comercial';

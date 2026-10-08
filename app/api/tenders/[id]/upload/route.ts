@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import { dataStore } from '@/lib/storage/store';
 import { createAdminSupabaseClient, isSupabaseConfigured } from '@/lib/supabase/admin';
+import { requireAuth } from '@/lib/auth/middleware';
 
 export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth(request, ['admin', 'gestor']);
+    if (auth.errorResponse) return auth.errorResponse;
+
     const { id } = await context.params;
     const tender = await dataStore.getTenderById(id);
     if (!tender) {
@@ -59,11 +63,11 @@ export async function POST(
         fileUrl = publicUrlData.publicUrl;
       } catch (storageErr) {
         console.warn('Fallback a URL simulada de archivo por error en Storage:', storageErr);
-        fileUrl = `https://storage.googleapis.com/licitaciones-csc-proposals/${id}/${encodeURIComponent(fileName)}`;
+        fileUrl = `https://storage.googleapis.com/licitaciones-mt-proposals/${id}/${encodeURIComponent(fileName)}`;
       }
     } else {
       // URL mock funcional para demostración
-      fileUrl = `https://storage.googleapis.com/licitaciones-csc-proposals/${id}/${encodeURIComponent(fileName)}`;
+      fileUrl = `https://storage.googleapis.com/licitaciones-mt-proposals/${id}/${encodeURIComponent(fileName)}`;
     }
 
     const updatedTender = await dataStore.updateTenderProposal(id, {

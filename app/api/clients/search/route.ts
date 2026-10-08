@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { dataStore } from '@/lib/storage/store';
-import { authenticateRequest } from '@/lib/auth/middleware';
+import { requireAuth } from '@/lib/auth/middleware';
 
 export async function GET(req: Request) {
   const startTime = performance.now();
 
   try {
+    const auth = await requireAuth(req);
+    if (auth.errorResponse) return auth.errorResponse;
     const { searchParams } = new URL(req.url);
     const query = searchParams.get('q') || '';
     const page = parseInt(searchParams.get('page') || '1', 10);

@@ -92,7 +92,20 @@ export async function POST(req: Request) {
     }
 
     // 3. Consulta parametrizada a la Base de Datos (Segura contra SQL Injection)
-    const user = await dataStore.getUserByEmail(email.trim());
+    let user;
+    try {
+      user = await dataStore.getUserByEmail(email.trim());
+    } catch (dbError: any) {
+      console.error(`[AUTH:LOGIN] Error conectando con la base de datos:`, dbError?.message || dbError);
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'No se pudo conectar con la base de datos Supabase. Verifique que el proyecto esté activo en supabase.com y que las credenciales en .env.local sean correctas.',
+          code: 'DATABASE_CONNECTION_ERROR',
+        },
+        { status: 503 }
+      );
+    }
 
     if (!user || !user.is_active) {
       const lockResult = recordFailedLogin(rateLimitKey);
@@ -199,7 +212,7 @@ export async function POST(req: Request) {
     });
 
     // Guardar token en cookie segura HttpOnly
-    response.cookies.set('csc_access_token', accessToken, {
+    response.cookies.set('mt_access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -207,7 +220,7 @@ export async function POST(req: Request) {
       path: '/',
     });
 
-    response.cookies.set('csc_refresh_token', refreshToken, {
+    response.cookies.set('mt_refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

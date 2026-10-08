@@ -454,7 +454,7 @@ export default function UsersAdminPage() {
                 </label>
                 <input
                   type="email"
-                  placeholder="usuario@csc.com"
+                  placeholder="usuario@mt.com"
                   value={createEmail}
                   onChange={(e) => setCreateEmail(e.target.value)}
                   required

@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifyAccessTokenDetailed } from '@/lib/auth/jwt';
 
 /**
- * proxy.ts — Primera línea de defensa a nivel de servidor (Next.js 16+).
+ * proxy.ts — Primera línea de defensa perimetral a nivel de servidor (Next.js 16+).
  *
- * Reemplaza al deprecado middleware.ts.
- * Protege rutas de página y de API validando la cookie HttpOnly de sesión.
+ * Valida criptográficamente el JWT (firma, expiración, algoritmo HS256).
  *
  * Flujo:
- *  - /login        → pública; si ya tiene cookie válida → redirect /
+ *  - /login        → pública
  *  - /api/auth/*   → pública (login, logout, me)
- *  - /api/cron/*   → pública (cron jobs internos)
- *  - resto /api/*  → requiere cookie O header Authorization: Bearer <token>
- *  - resto páginas → requiere cookie; si no tiene → redirect /login
+ *  - /api/cron/*   → pública / protegida por cron secret
+ *  - resto /api/*  → requiere Bearer <token> o cookie mt_access_token válida con HS256
+ *  - resto páginas → requiere cookie mt_access_token válida con HS256; si no → redirect /login
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -33,26 +33,68 @@ export function proxy(request: NextRequest) {
   }
 
   // ── Para el resto: verificar autenticación ────────────────────────────────
-  const cookieToken = request.cookies.get('csc_access_token')?.value;
-  const authHeader  = request.headers.get('authorization') ?? '';
-  const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-  const hasToken    = Boolean(cookieToken || bearerToken);
+  const authHeader = request.headers.get('authorization') ?? '';
+  let token: string | null = null;
 
-  // Rutas de API privadas sin token → 401
-  if (pathname.startsWith('/api/') && !hasToken) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'No autorizado. Inicia sesión para continuar.',
-        code: 'UNAUTHORIZED',
-      },
-      { status: 401 }
-    );
+  if (authHeader) {
+    if (!authHeader.startsWith('Bearer ')) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Token inválido',
+            code: 'JsonWebTokenError',
+          },
+          { status: 401 }
+        );
+      }
+    } else {
+      token = authHeader.slice(7).trim();
+    }
   }
 
-  // Páginas privadas sin cookie → redirigir a /login
-  if (!pathname.startsWith('/api/') && !cookieToken) {
+  if (!token) {
+    token = request.cookies.get('mt_access_token')?.value || null;
+  }
+
+  // Rutas de API privadas
+  if (pathname.startsWith('/api/')) {
+    if (!token) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'No autenticado',
+          code: 'NoToken',
+        },
+        { status: 401 }
+      );
+    }
+
+    const verification = verifyAccessTokenDetailed(token);
+    if (!verification.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: verification.message, // "Token expirado" o "Token inválido"
+          code: verification.errorType,
+        },
+        { status: 401 }
+      );
+    }
+
+    return NextResponse.next();
+  }
+
+  // Páginas privadas sin token válido → redirigir a /login
+  if (!token) {
     return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  const pageVerification = verifyAccessTokenDetailed(token);
+  if (!pageVerification.success) {
+    const redirectResponse = NextResponse.redirect(new URL('/login', request.url));
+    redirectResponse.cookies.delete('mt_access_token');
+    return redirectResponse;
   }
 
   return NextResponse.next();

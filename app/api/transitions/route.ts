@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { dataStore } from '@/lib/storage/store';
+import { requireAuth } from '@/lib/auth/middleware';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.errorResponse) return auth.errorResponse;
     const transitions = await dataStore.getAllTransitions();
     const tenders = await dataStore.getTenders();
 

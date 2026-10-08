@@ -22,8 +22,8 @@ export async function POST(req: Request) {
       message: 'Sesión cerrada exitosamente',
     });
 
-    response.cookies.delete('csc_access_token');
-    response.cookies.delete('csc_refresh_token');
+    response.cookies.delete('mt_access_token');
+    response.cookies.delete('mt_refresh_token');
 
     return response;
   } catch (error: any) {

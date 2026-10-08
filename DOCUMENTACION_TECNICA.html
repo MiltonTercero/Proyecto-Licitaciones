@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documentación Técnica - Sistema de Gestión de Licitaciones (MT)</title>
+<style>
+  /* === Estilos de Página === */
+  @page {
+    size: A4;
+    margin: 20mm 18mm 20mm 18mm;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.65;
+    color: #1a1a2e;
+    background: #ffffff;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 32px;
+  }
+
+  /* === Tipografía de Encabezados === */
+  h1 {
+    font-size: 22pt;
+    font-weight: 800;
+    color: #0f172a;
+    border-bottom: 3px solid #3b82f6;
+    padding-bottom: 10px;
+    margin-top: 0;
+    margin-bottom: 8px;
+    page-break-after: avoid;
+  }
+
+  h2 {
+    font-size: 15pt;
+    font-weight: 700;
+    color: #1e3a5f;
+    border-left: 5px solid #3b82f6;
+    padding-left: 12px;
+    margin-top: 32px;
+    margin-bottom: 12px;
+    page-break-after: avoid;
+  }
+
+  h3 {
+    font-size: 12.5pt;
+    font-weight: 700;
+    color: #1e3a5f;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 4px;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    page-break-after: avoid;
+  }
+
+  h4 {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #374151;
+    margin-top: 18px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+
+  h5, h6 {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #4b5563;
+    margin-top: 14px;
+    margin-bottom: 4px;
+  }
+
+  /* === Párrafos === */
+  p {
+    margin: 6px 0 10px;
+    text-align: justify;
+  }
+
+  /* === Código === */
+  code {
+    font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    font-size: 9pt;
+    background: #f1f5f9;
+    color: #dc2626;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid #e2e8f0;
+  }
+
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 14px 18px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    font-size: 8.5pt;
+    line-height: 1.5;
+    margin: 14px 0;
+    border-left: 4px solid #3b82f6;
+    page-break-inside: avoid;
+  }
+
+  pre code {
+    background: none;
+    color: #e2e8f0;
+    padding: 0;
+    border: none;
+    font-size: 8.5pt;
+  }
+
+  /* === Tablas === */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  thead tr {
+    background: #1e3a5f;
+    color: #ffffff;
+  }
+
+  thead th {
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 9pt;
+    border: 1px solid #1e3a5f;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  tbody tr:hover {
+    background: #eff6ff;
+  }
+
+  tbody td {
+    padding: 7px 12px;
+    border: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+
+  /* === Listas === */
+  ul, ol {
+    margin: 8px 0 12px;
+    padding-left: 24px;
+  }
+
+  li {
+    margin: 4px 0;
+  }
+
+  li ul, li ol {
+    margin: 2px 0;
+  }
+
+  /* === Separadores === */
+  hr {
+    border: none;
+    border-top: 2px solid #e2e8f0;
+    margin: 28px 0;
+  }
+
+  /* === Elementos especiales de portada === */
+  .portada {
+    text-align: center;
+    padding: 40px 0 30px;
+    border-bottom: 3px solid #3b82f6;
+    margin-bottom: 30px;
+    page-break-after: always;
+  }
+
+  .portada h1 {
+    font-size: 26pt;
+    border: none;
+    margin-bottom: 4px;
+  }
+
+  .portada .subtitulo {
+    font-size: 14pt;
+    color: #64748b;
+    margin-bottom: 24px;
+  }
+
+  .portada .meta {
+    font-size: 10pt;
+    color: #94a3b8;
+    margin-top: 20px;
+  }
+
+  .badge {
+    display: inline-block;
+    background: #3b82f6;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 9pt;
+    font-weight: 600;
+    margin: 3px;
+  }
+
+  /* === Pie de página (para impresión) === */
+  @media print {
+    body {
+      padding: 0;
+    }
+    
+    h2 {
+      page-break-before: auto;
+    }
+
+    pre, table, blockquote {
+      page-break-inside: avoid;
+    }
+
+    a {
+      color: #1e3a5f;
+      text-decoration: none;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="portada">
+  <div style="font-size: 36pt; margin-bottom: 12px;">📋</div>
+  <h1>Documentación Técnica</h1>
+  <div class="subtitulo">Sistema de Gestión de Licitaciones Comerciales (MT)</div>
+  <div>
+    <span class="badge">Next.js 16</span>
+    <span class="badge">React 19</span>
+    <span class="badge">TypeScript 5</span>
+    <span class="badge">Supabase</span>
+    <span class="badge">PostgreSQL 15+</span>
+    <span class="badge">Resend</span>
+    <span class="badge">Vercel</span>
+    <span class="badge">Tailwind CSS 4</span>
+  </div>
+  <div class="meta">
+    Versión 1.0 | Generado el 30 de septiembre de 2026
+  </div>
+</div>
+
+<!-- CONTENIDO PRINCIPAL -->
+<h1>DOCUMENTACIÓN TÉCNICA INTEGRAL</h1>
+<h2>Sistema de Gestión de Licitaciones Comerciales (MT)</h2>
+
+<hr>
+
+<h2>1. RESUMEN EJECUTIVO Y FICHA TÉCNICA</h2>
+
+<h3>1.1. Propósito del Sistema</h3>
+<p>El <strong>Sistema de Gestión de Licitaciones Comerciales (MT)</strong> es una plataforma web empresarial diseñada para digitalizar, controlar y auditar todo el ciclo de vida de propuestas comerciales, cotizaciones técnicas, validación de presupuestos, envío formal de ofertas a clientes, automatización de vencimientos y gestión de cobranzas.</p>
+
+<p>El sistema resuelve la problemática de inconsistencias presupuestarias, pérdida de propuestas, falta de seguimiento en fechas límites de convocatorias y desarticulación entre la adjudicación comercial y la recaudación financiera.</p>
+
+<h3>1.2. Ficha Técnica</h3>
+<ul><li><strong>Nombre de la Aplicación</strong>: Sistema de Gestión de Licitaciones Comerciales</li></ul>
+<ul><li><strong>Framework Principal</strong>: Next.js 16.3.3 (App Router, Server y Client Components)</li></ul>
+<ul><li><strong>Librería de Interfaz</strong>: React 19.2.8</li></ul>
+<ul><li><strong>Lenguaje</strong>: TypeScript 5</li></ul>
+<ul><li><strong>Estilos y Diseño</strong>: Tailwind CSS 4.x, Lucide Icons</li></ul>
+<ul><li><strong>Motor de Base de Datos</strong>: PostgreSQL 15+ (Gestionado vía Supabase)</li></ul>
+<ul><li><strong>Mecanismos de Seguridad en BD</strong>: Row Level Security (RLS), Triggers PL/pgSQL, Generated Columns</li></ul>
+<ul><li><strong>Almacenamiento de Archivos (Object Storage)</strong>: Supabase Storage (Bucket dedicado <code>proposals</code>)</li></ul>
+<ul><li><strong>Servicio de Correos Transaccionales</strong>: Resend API con plantillas HTML dinámicas y buffer binario de adjuntos</li></ul>
+<ul><li><strong>Tareas Programadas (Cron Jobs)</strong>: Vercel Cron Jobs / Endpoints HTTP protegidos con secreto criptográfico</li></ul>
+<ul><li><strong>Mecanismo de Autenticación</strong>: Sesiones mediante JWT (JSON Web Tokens) en Cookies <code>HttpOnly</code>, validación en servidor y cliente, y contraseñas cifradas con <code>bcryptjs</code></li></ul>
+
+<hr>
+
+<h2>2. ARQUITECTURA DEL SISTEMA</h2>
+
+<h3>2.1. Diagrama de Capas de la Aplicación</h3>
+
+<pre><code class="language-text">┌─────────────────────────────────────────────────────────────────────────┐
+│                      CAPA DE PRESENTACIÓN (CLIENTE)                     │
+│  React 19 / Next.js Pages (Client Components) + Context Providers       │
+│  - Dashboard de Métricas e Indicadores de Rendimiento (KPIs)            │
+│  - Wizard de Creación de Licitaciones en 3 Pasos                        │
+│  - Vistas de Detalle con Stepper de Estados y Modal de Cobranzas        │
+│  - Módulos Maestros: Clientes, Productos, Auditoría y Usuarios          │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │ Peticiones HTTPS (Fetch API)
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│              CAPA DE SEGURIDAD PERIMETRAL Y ENRUTAMIENTO                │
+│  - proxy.ts (Next.js 16 Server Interceptor / Middleware)                │
+│  - Rate Limiter en Memoria (Protección contra fuerza bruta y DDoS)       │
+│  - Control de Acceso Basado en Roles (RBAC: Admin, Gestor, Visualizador) │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                 CAPA DE CONTROL Y SERVICIOS (BACKEND)                   │
+│  Route Handlers (/app/api/*)                                            │
+│  - /api/auth/*: Gestión de sesiones, login, logout, me                  │
+│  - /api/tenders/*: CRUD, control de ítems, subida de PDF, transiciones  │
+│  - /api/clients/*: Catálogo y búsqueda de clientes corporativos         │
+│  - /api/products/*: Catálogo maestro de productos y servicios           │
+│  - /api/cron/*: Automatización de vencimientos y recordatorios          │
+│  - /api/users/<em> y /api/audit/</em>: Administración del sistema              │
+└──────────────────┬──────────────────┬─────────────────┬─────────────────┘
+                   │                  │                 │
+                   ▼                  ▼                 ▼
+┌──────────────────────┐  ┌──────────────────┐  ┌─────────────────────────┐
+│   SUPABASE DATABASE  │  │ SUPABASE STORAGE │  │     RESEND EMAIL API    │
+│  PostgreSQL 15+      │  │ Bucket:          │  │ Envío transaccional de  │
+│  Triggers &amp; Checks   │  │ 'proposals'      │  │ propuestas formales     │
+│  Auditoría inmutable │  │ (Documentos PDF) │  │ y alertas de expiración │
+└──────────────────────┘  └──────────────────┘  └─────────────────────────┘
+</code></pre>
+
+<h3>2.2. Máquina de Estados Finitos (Lifecycle de una Licitación)</h3>
+
+<p>El núcleo de la lógica de negocio se rige bajo una máquina de estados estricta y determinista:</p>
+
+<pre><code class="language-text">                  ┌──────────────┐
+                  │   Borrador   │
+                  └──────┬───────┘
+                         │ Requiere PDF formal adjunto y dispara
+                         │ email al cliente con resumen y archivo
+                         ▼
+                  ┌──────────────┐
+       ┌──────────┤    Activa    ├──────────┐
+       │          └──────┬───────┘          │
+       │                 │                  │
+       │ Plazo vencido   │ Adjudicación     │ Descalificación
+       │ (Cron o Manual) │ aprobada         │ o desestimación
+       ▼                 ▼                  ▼
+┌──────────────┐  ┌──────────────┐   ┌──────────────┐
+│   Perdida    │  │  Finalizada  │   │   Perdida    │
+└──────────────┘  └──────┬───────┘   └──────────────┘
+                         │ Facturación emitida
+                         ▼
+                  ┌──────────────┐
+                  │  Por Cobrar  │
+                  └──────┬───────┘
+                         │ Pagos sucesivos acumulados
+                         │ hasta Saldo Pendiente = $0.00
+                         ▼
+                  ┌──────────────┐
+                  │   Cobrada    │
+                  └──────────────┘
+</code></pre>
+
+<h4>Reglas de Transición Inviolables:</h4>
+<ol><li><strong>De <code>borrador</code> a <code>activa</code></strong>: Solo es posible si la licitación cuenta con un archivo formal subido (<code>proposal_file_url</code>) y al menos un producto cotizado.</li></ol>
+<ol><li><strong>De <code>activa</code> a <code>finalizada</code> o <code>perdida</code></strong>: La marca como ganada o no adjudicada. Si vence la fecha límite, el sistema automatizado la pasa directamente a <code>perdida</code>.</li></ol>
+<ol><li><strong>De <code>finalizada</code> a <code>por_cobrar</code></strong>: Habilita el módulo contable de abonos y pagos parciales.</li></ol>
+<ol><li><strong>De <code>por_cobrar</code> a <code>cobrada</code></strong>: Se dispara automáticamente cuando la suma de pagos registrados iguala el total estimado de la licitación.</li></ol>
+<ol><li><strong>Congelamiento de Ítems</strong>: Una vez que la licitación sale de <code>activa</code> (entra en <code>finalizada</code>, <code>por_cobrar</code>, <code>cobrada</code> o <code>perdida</code>), la base de datos y la API impiden estrictamente modificar, añadir o retirar productos.</li></ol>
+
+<hr>
+
+<h2>3. ESQUEMA DE BASE DE DATOS Y PERSISTENCIA</h2>
+
+<p>El esquema reside en PostgreSQL gestionado a través de Supabase (<code>supabase/schema.sql</code>).</p>
+
+<h3>3.1. Tablas y Entidades</h3>
+
+<table><thead><tr><th>Tabla</th><th>Clave Primaria</th><th>Propósito</th><th>Restricciones Destacadas</th></tr></thead><tbody><tr><td><code>roles</code></td><td><code>UUID</code></td><td>Almacena los roles del sistema (<code>admin</code>, <code>gestor</code>, <code>visualizador</code>).</td><td><code>name</code> es único.</td></tr>
+<tr><td><code>users</code></td><td><code>UUID</code></td><td>Credenciales de acceso de usuarios del sistema.</td><td><code>email</code> único, <code>password_hash</code> con bcrypt, llave foránea hacia <code>roles</code>.</td></tr>
+<tr><td><code>profiles</code></td><td><code>UUID</code></td><td>Perfil extendido del usuario.</td><td>Sincronizado para lecturas y roles operativos.</td></tr>
+<tr><td><code>clients</code></td><td><code>UUID</code></td><td>Registro de empresas y entidades convocantes.</td><td><code>tax_id</code> (RUC/NIT/CIF), índices de búsqueda por nombre y correo.</td></tr>
+<tr><td><code>products</code></td><td><code>UUID</code></td><td>Catálogo maestro de bienes y servicios ofrecidos.</td><td><code>code</code> único, <code>unit_price >= 0</code>.</td></tr>
+<tr><td><code>tenders</code></td><td><code>UUID</code></td><td>Registro maestro de la licitación.</td><td><code>code</code> único (ej. <code>LIC-2026-001</code>), <code>check_total_presupuesto</code> (<code>total_estimado <= presupuesto_maximo</code>).</td></tr>
+<tr><td><code>tender_items</code></td><td><code>UUID</code></td><td>Relación N:M entre licitaciones y productos.</td><td><code>UNIQUE (tender_id, product_id)</code>. <code>subtotal</code> es columna generada: <code>GENERATED ALWAYS AS (quantity * unit_price) STORED</code>.</td></tr>
+<tr><td><code>payments</code></td><td><code>UUID</code></td><td>Pagos y comprobantes de cobranza.</td><td><code>amount > 0</code>, llave foránea hacia <code>tenders</code> con borrado en cascada.</td></tr>
+<tr><td><code>tender_transitions</code></td><td><code>UUID</code></td><td>Pistas de auditoría del ciclo de vida de la licitación.</td><td>Guarda <code>previous_status</code>, <code>new_status</code>, fecha, usuario y notas explicativas.</td></tr>
+<tr><td><code>audit_logs</code></td><td><code>UUID</code></td><td>Pistas globales de auditoría de seguridad y mutación de datos.</td><td>Registra <code>action</code>, <code>user_id</code>, <code>table_name</code>, <code>record_id</code>, valores anteriores y nuevos en <code>JSONB</code>, e IP.</td></tr></tbody></table>
+<h3>3.2. Lógica de Base de Datos (Triggers PL/pgSQL)</h3>
+
+<ol><li><strong><code>trigger_tender_items_recalculate</code></strong>:</li></ol>
+
+<ol><li><strong><code>set_updated_at</code></strong>:</li></ol>
+
+<hr>
+
+<h2>4. ESTRUCTURA COMPLETA DEL PROYECTO</h2>
+
+<pre><code class="language-text">sistema-licitaciones/
+├── app/                                 # Enrutador App Router de Next.js
+│   ├── admin/                           # Vistas restringidas para Administradores
+│   │   ├── audit/page.tsx               # Consola visual de logs de auditoría global
+│   │   └── users/page.tsx               # Gestión integral de usuarios y asignación de roles
+│   ├── api/                             # Endpoints backend (Route Handlers)
+│   │   ├── audit/route.ts               # Consulta y filtrado de registros de auditoría
+│   │   ├── auth/                        # Endpoints de autenticación
+│   │   │   ├── login/route.ts           # Login con verificación bcrypt, emisión JWT y cookies
+│   │   │   ├── logout/route.ts          # Cierre de sesión y limpieza de cookies
+│   │   │   └── me/route.ts              # Consulta de usuario autenticado
+│   │   ├── clients/                     # Endpoints de empresas clientes
+│   │   │   ├── [id]/route.ts            # Edición y eliminación de un cliente
+│   │   │   ├── route.ts                 # Listado y alta de clientes
+│   │   │   └── search/route.ts          # Búsqueda rápida optimizada para comboboxes
+│   │   ├── cron/                        # Tareas automáticas en segundo plano
+│   │   │   └── check-deadlines/route.ts # Cron de expiración de plazos y recordatorio 48h
+│   │   ├── products/                    # Endpoints del catálogo de productos
+│   │   │   ├── [id]/route.ts            # Edición y baja de un producto
+│   │   │   └── route.ts                 # Listado y alta de productos
+│   │   ├── tenders/                     # Endpoints de licitaciones comerciales
+│   │   │   ├── [id]/                    # Sub-recursos de una licitación específica
+│   │   │   │   ├── items/route.ts       # Alta y baja de productos con validación presupuestaria
+│   │   │   │   ├── payments/route.ts    # Registro de pagos y liquidación automática
+│   │   │   │   ├── route.ts             # Detalle consolidado (join cliente, ítems, pagos)
+│   │   │   │   ├── send/route.ts        # Envío de propuesta formal por Resend y activación
+│   │   │   │   ├── status/route.ts      # Transición validada de la máquina de estados
+│   │   │   │   └── upload/route.ts      # Recepción y subida de PDF a Supabase Storage
+│   │   │   └── route.ts                 # Listado y creación atómica de licitaciones
+│   │   ├── transitions/route.ts         # Registro global de cambios de estado
+│   │   └── users/                       # Endpoints para administración de cuentas de usuario
+│   │       ├── [id]/route.ts            # Actualización y baja de usuarios
+│   │       └── route.ts                 # Listado y registro de nuevos usuarios
+│   ├── auditoria/page.tsx               # Interfaz general de auditoría
+│   ├── clientes/page.tsx                # Interfaz de gestión de empresas convocantes
+│   ├── licitaciones/                    # Vistas del módulo de licitaciones
+│   │   ├── [id]/page.tsx                # Vista de detalle, control de estado y finanzas
+│   │   ├── nueva/page.tsx               # Wizard guiado de 3 pasos para nueva licitación
+│   │   └── page.tsx                     # Listado general con filtros avanzados
+│   ├── login/page.tsx                   # Pantalla de acceso con protección de credenciales
+│   ├── productos/page.tsx               # Interfaz del catálogo maestro de productos
+│   ├── globals.css                      # Estilos globales y tokens Tailwind CSS
+│   ├── layout.tsx                       # Layout raíz con proveedores de contexto
+│   └── page.tsx                         # Dashboard principal (KPIs, gráficos y alertas)
+├── components/                          # Componentes modulares de interfaz
+│   ├── auth/                            # Componentes de autenticación
+│   │   └── auth-context.tsx             # Contexto React para estado de sesión y wrapper fetch
+│   ├── clients/                         # Componentes del módulo de clientes
+│   │   └── client-search-combobox.tsx   # Selector de autocompletado y alta rápida de clientes
+│   ├── dashboard/                       # Componentes del panel principal
+│   │   ├── kpi-card.tsx                 # Tarjeta de métrica con indicador de tendencia
+│   │   ├── tender-distribution-chart.tsx# Gráfico de barras de distribución por estado
+│   │   └── urgent-tenders-banner.tsx    # Banner de alerta visual para licitaciones &lt; 48 horas
+│   ├── layout/                          # Componentes estructurales de la aplicación
+│   │   ├── app-shell.tsx                # Contenedor maestro con barra lateral y contenido
+│   │   ├── navbar.tsx                   # Barra superior con datos de usuario y logout
+│   │   ├── sidebar.tsx                  # Menú de navegación con filtrado por rol RBAC
+│   │   ├── sidebar-context.tsx          # Control del estado colapsado/expandido de la barra
+│   │   └── theme-context.tsx            # Soporte de modo oscuro / modo claro
+│   ├── tenders/                         # Componentes especializados de licitaciones
+│   │   ├── file-uploader.tsx            # Zona de arrastre y subida de PDFs técnicos
+│   │   ├── payment-modal.tsx            # Ventana modal para registro de cobranzas
+│   │   ├── status-stepper.tsx           # Barra de progreso del ciclo de vida
+│   │   ├── tender-budget-bar.tsx        # Barra interactiva de control presupuestario
+│   │   └── transition-history.tsx       # Línea de tiempo con historial de auditoría
+│   └── ui/                              # Componentes genéricos de interfaz
+│       └── status-badge.tsx             # Etiqueta con estilo cromático según estado
+├── lib/                                 # Librerías auxiliares y lógica del servidor
+│   ├── audit/                           # Módulo de auditoría
+│   │   └── audit-logger.ts              # Función para registro estructurado en BD y consola
+│   ├── auth/                            # Lógica de seguridad y autenticación
+│   │   ├── jwt.ts                       # Generación y verificación de tokens JWT
+│   │   ├── middleware.ts                # Decorador requireAuth y validación de roles en APIs
+│   │   ├── password.ts                  # Hashing y validación de contraseñas con bcrypt
+│   │   └── rate-limiter.ts              # Algoritmo de limitación de tasa por dirección IP
+│   ├── email/                           # Módulo de mensajería electrónica
+│   │   ├── resend.ts                    # Cliente Resend con soporte de adjuntos binarios
+│   │   └── templates.ts                 # Plantillas HTML responsivas para correos
+│   ├── storage/                         # Capa de acceso a datos unificada
+│   │   └── store.ts                     # Funciones CRUD e integración con Supabase
+│   ├── supabase/                        # Conectores de base de datos
+│   │   ├── admin.ts                     # Cliente Supabase privilegiado (Service Role)
+│   │   └── client.ts                    # Cliente Supabase anónimo / cliente
+│   └── types/                           # Definiciones de TypeScript
+│       └── database.ts                  # Interfaces de entidades y modelos del sistema
+├── public/                              # Recursos estáticos servidos públicamente
+├── supabase/                            # Scripts de infraestructura de base de datos
+│   ├── schema.sql                       # Definición de tablas, tipos enum, índices y triggers
+│   └── seed.sql                         # Datos de prueba para verificación inmediata
+├── eslint.config.mjs                    # Configuración de linter de código
+├── next.config.ts                       # Configuración de compilación de Next.js
+├── package.json                         # Dependencias y scripts de ejecución
+├── postcss.config.mjs                   # Pipeline de procesamiento CSS
+├── proxy.ts                             # Guardián de servidor para intercepción de rutas
+├── tsconfig.json                        # Configuración del compilador TypeScript
+└── vercel.json                          # Configuración de Cron Jobs para Vercel
+</code></pre>
+
+<hr>
+
+<h2>5. DESGLOSE DETALLADO ARCHIVO POR ARCHIVO</h2>
+
+<h3>5.1. Archivos de Configuración y Raíz</h3>
+
+<h4><code>package.json</code></h4>
+<p>Define el manifiesto del proyecto, las dependencias de ejecución y desarrollo, y los scripts principales:</p>
+<p>- <code>npm run dev</code>: Ejecuta el servidor local de desarrollo con Turbopack.</p>
+<p>- <code>npm run build</code>: Compila la aplicación para producción.</p>
+<p>- <code>npm run start</code>: Inicia el servidor optimizado de producción.</p>
+<p>- <strong>Dependencias clave</strong>: <code>@supabase/supabase-js</code>, <code>bcryptjs</code>, <code>jsonwebtoken</code>, <code>lucide-react</code>, <code>next</code>, <code>react</code>, <code>react-dom</code>, <code>resend</code>, <code>zod</code>.</p>
+
+<h4><code>proxy.ts</code></h4>
+<p>Es la <strong>primera línea de defensa a nivel de servidor</strong> en Next.js. Funciona como un interceptor perimetral de peticiones HTTP:</p>
+<p>- <strong>Rutas Públicas</strong>: Permite libre acceso a <code>/login</code>, <code>/api/auth/<em></code> y <code>/api/cron/</em></code>.</p>
+<p>- <strong>Rutas de API Privadas</strong>: Revisa si existe la cookie <code>mt_access_token</code> o el encabezado <code>Authorization: Bearer <token></code>. Si no existe, retorna inmediatamente <code>401 Unauthorized</code>.</p>
+<p>- <strong>Páginas Protegidas</strong>: Si un usuario intenta acceder a rutas como <code>/</code>, <code>/licitaciones</code>, <code>/clientes</code>, etc. sin una cookie válida de sesión, es redirigido automáticamente a <code>/login</code>.</p>
+<p>- <strong>Matcher</strong>: Excluye activos estáticos (<code>_next</code>, imágenes, <code>favicon.ico</code>) para no degradar el rendimiento.</p>
+
+<h4><code>vercel.json</code></h4>
+<p>Define la automatización de infraestructura en la nube de Vercel. Configura un <strong>Cron Job</strong> que invoca periódicamente la ruta <code>/api/cron/check-deadlines</code> cada 6 horas (<code>0 <em>/6 </em> <em> </em></code>) para garantizar la auto-expiración de licitaciones y el despacho de recordatorios.</p>
+
+<h4><code>tsconfig.json</code> y <code>next.config.ts</code></h4>
+<p>Configuraciones estándar del compilador TypeScript con alias de módulo <code>@/*</code> apuntando a la raíz, optimización de fuentes y empaquetado de producción.</p>
+
+<hr>
+
+<h3>5.2. Capa de Servicios y Lógica de Negocio (<code>lib/</code>)</h3>
+
+<h4><code>lib/types/database.ts</code></h4>
+<p>Declara los tipos estrictos de TypeScript para todo el modelo de datos:</p>
+<p>- <code>TenderStatus</code>: <code>'borrador' | 'activa' | 'finalizada' | 'por_cobrar' | 'cobrada' | 'perdida'</code></p>
+<p>- <code>RoleType</code> / <code>UserRole</code>: <code>'admin' | 'gestor' | 'visualizador'</code></p>
+<p>- Interfaces para <code>User</code>, <code>Role</code>, <code>Profile</code>, <code>AuditLog</code>, <code>Client</code>, <code>Product</code>, <code>TenderItem</code>, <code>Payment</code>, <code>TenderTransition</code> y <code>Tender</code> (con campos anidados para joins).</p>
+
+<h4><code>lib/supabase/admin.ts</code> y <code>lib/supabase/client.ts</code></h4>
+<p>- <code>admin.ts</code>: Instancia el cliente de Supabase utilizando <code>SUPABASE_SERVICE_ROLE_KEY</code>. Este cliente tiene privilegios elevados para ejecutar operaciones administrativas de servidor evitando bloqueos por RLS.</p>
+<p>- <code>client.ts</code>: Instancia el cliente público con <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> para operaciones estándar en entornos seguros.</p>
+
+<h4><code>lib/storage/store.ts</code></h4>
+<p>Es el repositorio de datos centralizado del backend. Agrupa más de 25 métodos asíncronos que interactúan con Supabase:</p>
+<p>- <strong>Usuarios y Roles</strong>: <code>getRoles</code>, <code>getUsers</code>, <code>getUserById</code>, <code>getUserByEmail</code>, <code>createUser</code>, <code>updateUser</code>, <code>deleteUser</code>, <code>updateLastLogin</code>.</p>
+<p>- <strong>Auditoría</strong>: <code>createAuditLog</code>, <code>getAuditLogs</code> (soporta filtros por usuario, acción, tabla y rango de fechas).</p>
+<p>- <strong>Clientes</strong>: <code>getClients</code>, <code>searchClients</code> (con coincidencias parciales por nombre, RUC y correo), <code>getClientById</code>, <code>createClient</code>, <code>updateClient</code>, <code>deleteClient</code>.</p>
+<p>- <strong>Productos</strong>: <code>getProducts</code>, <code>getProductById</code>, <code>createProduct</code>, <code>updateProduct</code>, <code>deleteProduct</code>.</p>
+<p>- <strong>Licitaciones</strong>:</p>
+<p>  - <code>getTenders</code>: Trae todas las licitaciones con joins a cliente, ítems, productos y pagos.</p>
+<p>  - <code>getTenderById</code>: Trae el detalle completo incluyendo el historial de transiciones.</p>
+<p>  - <code>createTender</code>: Inserta la licitación con su presupuesto y plazos.</p>
+<p>  - <code>updateTenderProposal</code>: Asocia la URL, nombre y tamaño del archivo PDF subido.</p>
+<p>  - <code>addItemToTender</code>: Agrega un producto calculando validaciones y omitiendo deliberadamente la columna generada <code>subtotal</code> para cumplir con las restricciones de PostgreSQL.</p>
+<p>  - <code>removeItemFromTender</code>: Retira un producto recalculando el total en base de datos.</p>
+<p>  - <code>transitionTenderStatus</code>: Valida que el cambio de estado esté permitido por la matriz <code>VALID_TRANSITIONS</code> y registra la transición en <code>tender_transitions</code>.</p>
+<p>  - <code>registerPayment</code>: Registra un abono, valida que no supere el saldo pendiente y si el saldo llega a 0, transiciona la licitación a <code>cobrada</code>.</p>
+<p>  - <code>logTransition</code>: Inserta en el log histórico de estados.</p>
+
+<h4><code>lib/auth/jwt.ts</code></h4>
+<p>- <code>generateAccessToken</code>: Crea un JWT firmado con validez de 1 hora conteniendo <code>userId</code>, <code>email</code>, <code>role</code> y <code>fullName</code>.</p>
+<p>- <code>generateRefreshToken</code>: Crea un token de refresco con validez de 7 días.</p>
+<p>- <code>verifyAccessToken</code> y <code>verifyRefreshToken</code>: Validan la firma criptográfica y descodifican el payload.</p>
+
+<h4><code>lib/auth/password.ts</code></h4>
+<p>- <code>hashPassword</code>: Genera un hash seguro utilizando <code>bcryptjs</code> con 10 rondas de salt.</p>
+<p>- <code>verifyPassword</code>: Compara una contraseña en texto plano contra el hash almacenado.</p>
+
+<h4><code>lib/auth/rate-limiter.ts</code></h4>
+<p>Implementa un mecanismo de limitación de tasa en memoria por dirección IP:</p>
+<p>- Límite global: Máximo 100 peticiones por minuto.</p>
+<p>- Límite de login: Máximo 5 intentos fallidos por ventana de 15 minutos para prevenir ataques de fuerza bruta.</p>
+
+<h4><code>lib/auth/middleware.ts</code></h4>
+<p>- Función <code>requireAuth(req, allowedRoles)</code>:</p>
+<p>  - Obtiene la IP del cliente y valida el rate limit.</p>
+<p>  - Extrae el token JWT desde la cookie <code>mt_access_token</code> o el encabezado <code>Authorization</code>.</p>
+<p>  - Si el token es inválido o no existe, retorna <code>401 Unauthorized</code>.</p>
+<p>  - Si se especifican roles permitidos (RBAC) y el usuario no posee el rol requerido, retorna <code>403 Forbidden</code>.</p>
+
+<h4><code>lib/audit/audit-logger.ts</code></h4>
+<p>- Función <code>logAudit(params)</code>: Recibe la acción realizada, el usuario, la dirección IP, los valores anteriores y los valores nuevos. Guarda el registro en la tabla <code>audit_logs</code> y emite una traza formateada en la consola del servidor.</p>
+
+<h4><code>lib/email/resend.ts</code> y <code>lib/email/templates.ts</code></h4>
+<p>- <code>templates.ts</code>: Genera código HTML responsivo, moderno y profesional para dos eventos:</p>
+<p>  1. Envío de propuesta formal al cliente (resumen de ítems, precio total, presupuesto y botón de contacto).</p>
+<p>  2. Alerta de vencimiento urgente (< 48 horas restantes).</p>
+<p>- <code>resend.ts</code>:</p>
+<p>  - Se conecta a la API de Resend.</p>
+<p>  - Si existe una URL de propuesta técnica, descarga el archivo en un <code>Buffer</code> en memoria y lo adjunta físicamente al correo electrónico.</p>
+<p>  - Si no hay credenciales activas en desarrollo local, entra en modo <strong>Simulación Segura</strong>, registrando la operación en consola sin interrumpir el flujo del sistema.</p>
+
+<hr>
+
+<h3>5.3. Endpoints Backend (<code>app/api/</code>)</h3>
+
+<h4>Autenticación y Perfil</h4>
+<ul><li><code>POST /api/auth/login</code>: Recibe <code>email</code> y <code>password</code>. Valida intentos por IP, verifica el hash de contraseña, genera los tokens JWT, configura cookies <code>HttpOnly</code> seguras de sesión y registra el evento de inicio de sesión exitoso o fallido en auditoría.</li></ul>
+<ul><li><code>POST /api/auth/logout</code>: Elimina las cookies de sesión y audita el cierre de sesión.</li></ul>
+<ul><li><code>GET /api/auth/me</code>: Verifica la identidad del usuario actual a través de la cookie y retorna su perfil y rol.</li></ul>
+
+<h4>Licitaciones y Operaciones Comerciales</h4>
+<ul><li><code>GET /api/tenders</code>: Retorna todas las licitaciones registradas con sus relaciones.</li></ul>
+<ul><li><code>POST /api/tenders</code>: Crea una nueva licitación. Si el payload incluye una lista de <code>items</code>, los inserta de manera atómica junto con la licitación.</li></ul>
+<ul><li><code>GET /api/tenders/[id]</code>: Obtiene el detalle profundo de una licitación en particular.</li></ul>
+<ul><li><code>POST /api/tenders/[id]/upload</code>: Recibe un archivo <code>FormData</code> (normalmente un PDF formal), lo valida y lo sube al bucket <code>proposals</code> de Supabase Storage, actualizando la URL en la licitación.</li></ul>
+<ul><li><code>POST /api/tenders/[id]/send</code>: Verifica que la licitación cuente con archivo adjunto y productos. Despacha el correo formal al cliente con el PDF adjunto mediante Resend y transiciona el estado de <code>borrador</code> a <code>activa</code>.</li></ul>
+<ul><li><code>POST /api/tenders/[id]/status</code>: Procesa transiciones manuales de estado (<code>finalizada</code>, <code>perdida</code>, <code>por_cobrar</code>), validando permisos y registrando la auditoría con notas.</li></ul>
+<ul><li><code>POST /api/tenders/[id]/items</code>: Añade un producto a la licitación verificando que no se supere el presupuesto máximo.</li></ul>
+<ul><li><code>DELETE /api/tenders/[id]/items</code>: Elimina un producto asignado.</li></ul>
+<ul><li><code>GET /api/tenders/[id]/payments</code> y <code>POST /api/tenders/[id]/payments</code>: Permite consultar y registrar abonos a licitaciones en estado <code>por_cobrar</code>. Valida que el monto no supere el saldo pendiente y si el saldo llega a cero, transiciona automáticamente a <code>cobrada</code>.</li></ul>
+
+<h4>Clientes y Productos</h4>
+<ul><li><code>GET</code> / <code>POST /api/clients</code>: Listado general y registro de clientes.</li></ul>
+<ul><li><code>PUT</code> / <code>DELETE /api/clients/[id]</code>: Modificación y eliminación de clientes (eliminación reservada para administradores).</li></ul>
+<ul><li><code>GET /api/clients/search</code>: Búsqueda instantánea para componentes de selección rápida.</li></ul>
+<ul><li><code>GET</code> / <code>POST /api/products</code>: Listado y creación de ítems en el catálogo de productos.</li></ul>
+<ul><li><code>PUT</code> / <code>DELETE /api/products/[id]</code>: Modificación y desactivación de productos.</li></ul>
+
+<h4>Administración, Auditoría y Automatización</h4>
+<ul><li><code>GET /api/audit</code>: Consulta de trazas de auditoría con filtros.</li></ul>
+<ul><li><code>GET /api/transitions</code>: Histórico general de cambios de estado.</li></ul>
+<ul><li><code>GET</code> / <code>POST /api/users</code> y <code>/api/users/[id]</code>: Gestión de cuentas de usuario del sistema (solo administradores).</li></ul>
+<ul><li><code>GET</code> / <code>POST /api/cron/check-deadlines</code>: - Compara <code>fecha_limite</code> contra la fecha actual (<code>NOW()</code>). - Licitaciones activas cuya fecha límite ya pasó: Se transicionan a <code>perdida</code> automáticamente. - Licitaciones activas con menos de 48 horas restantes y <code>reminder_sent = false</code>: Se les despacha un correo de recordatorio urgente y se actualiza <code>reminder_sent = true</code>. - Puede ejecutarse automáticamente vía Vercel Cron o manualmente mediante un parámetro de prueba en el dashboard.</li></ul>
+
+<hr>
+
+<h3>5.4. Componentes de Interfaz de Usuario (<code>components/</code>)</h3>
+
+<h4>Seguridad y Diseño Estructural</h4>
+<ul><li><code>auth-context.tsx</code>: Gestiona el estado de autenticación en el cliente React. Provee funciones <code>login</code>, <code>logout</code> y un wrapper <code>authFetch</code> que inyecta encabezados de autorización y detecta respuestas <code>401</code> para redirigir al login.</li></ul>
+<ul><li><code>app-shell.tsx</code>: Envoltura principal de la aplicación. Maneja el diseño responsivo, adaptando la barra lateral para dispositivos móviles y escritorio.</li></ul>
+<ul><li><code>navbar.tsx</code>: Barra de navegación superior. Muestra el nombre de usuario, una insignia distintiva con su rol (<code>admin</code>, <code>gestor</code>, <code>visualizador</code>), selector de tema y botón de cierre de sesión.</li></ul>
+<ul><li><code>sidebar.tsx</code>: Menú lateral izquierdo. Contiene enlaces a Dashboard, Licitaciones, Clientes, Productos, Auditoría y Gestión de Usuarios. Oculta dinámicamente los módulos administrativos a usuarios sin permisos.</li></ul>
+
+<h4>Visualización y Control de Licitaciones</h4>
+<ul><li><code>status-badge.tsx</code>: Insignia gráfica reutilizable con colores semánticos: - Borrador: Gris - Activa: Azul - Finalizada: Púrpura - Por Cobrar: Ámbar / Naranja - Cobrada: Verde Esmeralda - Perdida: Rojo</li></ul>
+<ul><li><code>status-stepper.tsx</code>: Componente visual interactivo que muestra el avance en el ciclo de vida de la licitación y los posibles caminos de transición.</li></ul>
+<ul><li><code>tender-budget-bar.tsx</code>: Indicador visual dinámico del presupuesto: - Verde: Consumo menor al 80%. - Amarillo: Consumo entre 80% y 100%. - Rojo: Consumo superior al 100% (alerta de bloqueo de cotización).</li></ul>
+<ul><li><code>file-uploader.tsx</code>: Componente para subir documentos PDF técnicos arrastrando y soltando o seleccionando desde el explorador de archivos.</li></ul>
+<ul><li><code>payment-modal.tsx</code>: Modal interactivo que calcula el saldo pendiente en tiempo real y permite ingresar el monto a abonar, la fecha y el número de comprobante.</li></ul>
+<ul><li><code>transition-history.tsx</code>: Línea de tiempo visual que muestra cronológicamente cada cambio de estado, quién lo ejecutó, la fecha exacta y las observaciones ingresadas.</li></ul>
+
+<h4>Componentes de Negocio y Métricas</h4>
+<ul><li><code>kpi-card.tsx</code>: Muestra valores consolidados (total licitaciones, montos cotizados, tasa de éxito) con iconografía y porcentajes.</li></ul>
+<ul><li><code>tender-distribution-chart.tsx</code>: Gráfico de barras que ilustra la cantidad de licitaciones existentes en cada una de las fases comerciales.</li></ul>
+<ul><li><code>urgent-tenders-banner.tsx</code>: Banner de alerta de alta prioridad que aparece automáticamente en el panel principal cuando una o más licitaciones activas están a menos de 48 horas de expirar.</li></ul>
+<ul><li><code>client-search-combobox.tsx</code>: Componente de búsqueda y selección de clientes con autocompletado en tiempo real.</li></ul>
+
+<hr>
+
+<h3>5.5. Vistas y Páginas de la Aplicación (<code>app/</code>)</h3>
+
+<ul><li><code>app/page.tsx</code> (Dashboard General): Centro de mando que reúne los KPIs del negocio, el gráfico de distribución, el banner de urgencias, la lista de licitaciones recientes y el botón de prueba para el Cron Job.</li></ul>
+<ul><li><code>app/login/page.tsx</code>: Pantalla de inicio de sesión con validación de credenciales, protección contra fuerza bruta y diseño empresarial limpio.</li></ul>
+<ul><li><code>app/licitaciones/page.tsx</code>: Directorio de todas las licitaciones con buscador por texto, filtro por estado comercial y ordenamiento por fecha límite.</li></ul>
+<ul><li><code>app/licitaciones/nueva/page.tsx</code> (Asistente en 3 Pasos): - <strong>Paso 1 (Datos & Cliente)</strong>: Título, código, cliente convocante, presupuesto máximo y fecha límite. - <strong>Paso 2 (Productos & Cotización)</strong>: Selección de productos del catálogo, especificación de cantidades y cálculo dinámico con control de presupuesto en tiempo real. - <strong>Paso 3 (Propuesta & Cierre)</strong>: Carga del PDF formal y confirmación de guardado en borrador o activación inmediata con envío de correo.</li></ul>
+<ul><li><code>app/licitaciones/[id]/page.tsx</code> (Detalle Integral): Vista 360° que reúne los datos generales, el stepper de estado, pestañas de ítems cotizados, visualizador/descargador de la propuesta técnica, panel de pagos y cobranzas, y registro histórico de transiciones.</li></ul>
+<ul><li><code>app/clientes/page.tsx</code>: Módulo CRUD para dar de alta, editar y listar clientes con información de contacto y fiscal.</li></ul>
+<ul><li><code>app/productos/page.tsx</code>: Módulo de mantenimiento del catálogo maestro de precios y unidades de medida.</li></ul>
+<ul><li><code>app/admin/users/page.tsx</code>: Panel exclusivo de administradores para gestionar operadores del sistema y definir sus niveles de autorización.</li></ul>
+<ul><li><code>app/admin/audit/page.tsx</code> y <code>app/auditoria/page.tsx</code>: Registro inmutable donde se visualizan todas las operaciones críticas realizadas en el sistema, con capacidad de inspeccionar cambios en formato JSON.</li></ul>
+
+<hr>
+
+<h2>6. MATRIZ DE SEGURIDAD Y PERMISOS (RBAC)</h2>
+
+<p>El sistema aplica un modelo de control de acceso basado en roles con 3 niveles:</p>
+
+<table><thead><tr><th>Módulo / Acción</th><th>Administrador (<code>admin</code>)</th><th>Gestor (<code>gestor</code>)</th><th>Visualizador (<code>visualizador</code>)</th></tr></thead><tbody><tr><td>Ver Dashboard y Métricas</td><td>Permitido</td><td>Permitido</td><td>Permitido</td></tr>
+<tr><td>Ver Licitaciones, Clientes y Productos</td><td>Permitido</td><td>Permitido</td><td>Permitido</td></tr>
+<tr><td>Crear y Editar Licitaciones</td><td>Permitido</td><td>Permitido</td><td>Bloqueado</td></tr>
+<tr><td>Enviar y Activar Licitaciones</td><td>Permitido</td><td>Permitido</td><td>Bloqueado</td></tr>
+<tr><td>Cambiar Estados (Finalizar/Perder)</td><td>Permitido</td><td>Permitido</td><td>Bloqueado</td></tr>
+<tr><td>Registrar Pagos y Cobranzas</td><td>Permitido</td><td>Permitido</td><td>Bloqueado</td></tr>
+<tr><td>Crear y Modificar Clientes y Productos</td><td>Permitido</td><td>Permitido</td><td>Bloqueado</td></tr>
+<tr><td>Eliminar Clientes o Productos</td><td>Permitido</td><td>Bloqueado</td><td>Bloqueado</td></tr>
+<tr><td>Gestionar Cuentas de Usuario</td><td>Permitido</td><td>Bloqueado</td><td>Bloqueado</td></tr>
+<tr><td>Consultar Auditoría Global del Sistema</td><td>Permitido</td><td>Bloqueado</td><td>Bloqueado</td></tr></tbody></table>
+<hr>
+
+<h2>7. VARIABLES DE ENTORNO Y GUÍA DE CONFIGURACIÓN</h2>
+
+<p>Para ejecutar la aplicación localmente o en un entorno de nube, se requieren las siguientes variables en el archivo <code>.env.local</code>:</p>
+
+<pre><code class="language-env"># Conexión con Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-publica
+SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key-privada
+
+<h1>Servicio de Correo Electrónico (Resend)</h1>
+RESEND_API_KEY=re_tu_api_key_aqui
+RESEND_FROM_EMAIL=Licitaciones MT &lt;onboarding@resend.dev&gt;
+
+<h1>Tareas Programadas (Vercel Cron)</h1>
+CRON_SECRET=clave_secreta_para_proteger_endpoint_cron
+
+<h1>Seguridad de Sesión</h1>
+JWT_SECRET=clave_super_secreta_para_firmar_jwt_de_sesion
+
+<h1>URL Base de la Aplicación</h1>
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+</code></pre>
+
+<h3>Instrucciones de Instalación:</h3>
+<ol><li>Clonar el repositorio y acceder a la carpeta del proyecto:</li></ol>
+<ol><li>Instalar las dependencias de Node.js:</li></ol>
+<ol><li>Ejecutar el esquema y datos de prueba en la consola SQL de Supabase:</li></ol>
+<ol><li>Crear un bucket público llamado <code>proposals</code> en el panel de Supabase Storage.</li></ol>
+<ol><li>Iniciar el entorno de desarrollo:</li></ol>
+<ol><li>Ingresar desde el navegador a <code>http://localhost:3000</code>.</li></ol>
+
+<hr>
+<p><em>Documento técnico de arquitectura y especificación de software elaborado para el Sistema de Gestión de Licitaciones Comerciales (MT).</em></p>
+
+
+</body>
+</html>

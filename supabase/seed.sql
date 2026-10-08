@@ -2,6 +2,20 @@
 -- SISTEMA DE GESTIÓN DE LICITACIONES - SEED DATA DE EJEMPLO
 -- ==============================================================================
 
+-- 0. Insertar Usuarios de Prueba (Contraseñas: Admin123!, Gestor123!, Visual123!)
+INSERT INTO users (id, email, password_hash, role_id, full_name, is_active) VALUES
+-- Cuentas MT
+('u0000001-0000-0000-0000-000000000001', 'admin@mt.com', '$2b$10$PiN234PO4LY8BQHsvVJsj.zMbNm1.tbE8USdATZzNuE76qcFcmHxC', 'r0000001-0000-0000-0000-000000000001', 'Administrador MT', true),
+('u0000001-0000-0000-0000-000000000002', 'gestor@mt.com', '$2b$10$rqbRwDK07N9HyJXBCRdMze4RMbArGQC3rV6LhrN3m8cLaTjAKgOt2', 'r0000001-0000-0000-0000-000000000002', 'Gestor Comercial MT', true),
+('u0000001-0000-0000-0000-000000000003', 'visualizador@mt.com', '$2b$10$CERjnVYjKug8ZMp71ghHLuSJjK9EzkGWKuEZ3PPZki7qZ2LFbGj7.', 'r0000001-0000-0000-0000-000000000003', 'Visualizador MT', true),
+-- Cuentas de compatibilidad previa
+('u0000001-0000-0000-0000-000000000004', 'admin@csc.com', '$2b$10$PiN234PO4LY8BQHsvVJsj.zMbNm1.tbE8USdATZzNuE76qcFcmHxC', 'r0000001-0000-0000-0000-000000000001', 'Administrador General', true),
+('u0000001-0000-0000-0000-000000000005', 'gestor@csc.com', '$2b$10$rqbRwDK07N9HyJXBCRdMze4RMbArGQC3rV6LhrN3m8cLaTjAKgOt2', 'r0000001-0000-0000-0000-000000000002', 'Gestor Comercial', true),
+('u0000001-0000-0000-0000-000000000006', 'visualizador@csc.com', '$2b$10$CERjnVYjKug8ZMp71ghHLuSJjK9EzkGWKuEZ3PPZki7qZ2LFbGj7.', 'r0000001-0000-0000-0000-000000000003', 'Visualizador', true)
+ON CONFLICT (email) DO UPDATE SET 
+  password_hash = EXCLUDED.password_hash,
+  is_active = true;
+
 -- 1. Insertar Clientes
 INSERT INTO clients (id, name, tax_id, email, phone, address, contact_name) VALUES
 ('a0000001-0000-0000-0000-000000000001', 'Corporación Minera Andina S.A.', 'RUC-20489123451', 'licitaciones@mineraandina.com', '+51 987 654 321', 'Av. Las Begonias 450, San Isidro, Lima', 'Ing. Roberto Mendoza'),

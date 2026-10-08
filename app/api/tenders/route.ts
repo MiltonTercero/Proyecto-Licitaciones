@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { dataStore } from '@/lib/storage/store';
+import { requireAuth } from '@/lib/auth/middleware';
 
 export async function GET(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.errorResponse) return auth.errorResponse;
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const clientId = searchParams.get('clientId');
@@ -35,6 +39,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAuth(request, ['admin', 'gestor']);
+    if (auth.errorResponse) return auth.errorResponse;
+
     const body = await request.json();
     const { title, client_id, presupuesto_maximo, fecha_limite, description, code, items } = body;
 

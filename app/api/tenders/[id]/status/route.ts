@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import { dataStore } from '@/lib/storage/store';
 import { TenderStatus } from '@/lib/types/database';
+import { requireAuth } from '@/lib/auth/middleware';
 
 export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth(request, ['admin', 'gestor']);
+    if (auth.errorResponse) return auth.errorResponse;
+
     const { id } = await context.params;
     const body = await request.json();
     const { status: targetStatus, userName, notes } = body;

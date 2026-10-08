@@ -1,4 +1,4 @@
-#  Sistema de Gestión de Licitaciones Comerciales (CSC)
+#  Sistema de Gestión de Licitaciones Comerciales (MT)
 
 Sistema web integral y moderno para la gestión del ciclo de vida de licitaciones comerciales, cotizaciones técnicas, control presupuestario, notificaciones automáticas y cobranza.
 

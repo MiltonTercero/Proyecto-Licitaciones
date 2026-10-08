@@ -12,7 +12,7 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 // GET /api/users - Solo Admin
 export async function GET(req: Request) {
   try {
-    const auth = requireAuth(req, ['admin']);
+    const auth = await requireAuth(req, ['admin']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const users = await dataStore.getUsers();
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   const ip = getClientIp(req);
 
   try {
-    const auth = requireAuth(req, ['admin']);
+    const auth = await requireAuth(req, ['admin']);
     if (auth.errorResponse) return auth.errorResponse;
 
     let body: any;

@@ -11,7 +11,7 @@ export async function GET(
   props: { params: Promise<{ id: string }> }
 ) {
   try {
-    const auth = requireAuth(req, ['admin']);
+    const auth = await requireAuth(req, ['admin']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const { id } = await props.params;
@@ -41,7 +41,7 @@ export async function PUT(
   const ip = getClientIp(req);
 
   try {
-    const auth = requireAuth(req, ['admin']);
+    const auth = await requireAuth(req, ['admin']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const { id } = await props.params;
@@ -117,7 +117,7 @@ export async function DELETE(
   const ip = getClientIp(req);
 
   try {
-    const auth = requireAuth(req, ['admin']);
+    const auth = await requireAuth(req, ['admin']);
     if (auth.errorResponse) return auth.errorResponse;
 
     const { id } = await props.params;

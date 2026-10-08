@@ -162,7 +162,7 @@ export function Navbar({ onRefresh, isRefreshing }: NavbarProps) {
                     {user?.fullName || 'Admin Comercial'}
                   </p>
                   <p className="text-xs text-zinc-500 mt-0.5 truncate">
-                    {user?.email || 'admin@csc.com'}
+                    {user?.email || 'admin@mt.com'}
                   </p>
                   <span className={`inline-block text-[10px] font-bold px-2 py-0.5 mt-2 rounded-md border ${roleBadgeColor}`}>
                     Rol: {roleLabel}
