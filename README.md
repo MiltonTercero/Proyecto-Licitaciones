@@ -4,11 +4,15 @@ Sistema web integral y moderno para la gestión del ciclo de vida de licitacione
 
 Desarrollado con **Next.js 16 (App Router)**, **Supabase (PostgreSQL, RLS y Storage)**, **Resend (Emails transaccionales con adjuntos reales)** y **Vercel Cron Jobs (Automatización de vencimientos y recordatorios)**.
 
-<img width="677" height="455" alt="image" src="https://github.com/user-attachments/assets/88755f9e-51f5-46e4-93bc-fcdcc0302bbc" />
+<img width="620" height="380" alt="Captura de pantalla 2026-11-24 191150" src="https://github.com/user-attachments/assets/e349d92c-4d27-4616-b852-0856ecc7fcc8" />
+<img width="620" height="308" alt="Captura de pantalla 2026-11-24 191133" src="https://github.com/user-attachments/assets/d646ff34-e3b2-4f1d-a376-d052cf38b00b" />
+<img width="617" height="293" alt="Captura de pantalla 2026-11-24 191120" src="https://github.com/user-attachments/assets/71fa7ed8-c21f-4f59-9034-b8d3ba33eee3" />
+<img width="566" height="392" alt="Captura de pantalla 2026-11-24 191108" src="https://github.com/user-attachments/assets/c06e8056-c0c3-41dc-a76c-a799897652f8" />
+<img width="632" height="373" alt="Captura de pantalla 2026-11-24 191057" src="https://github.com/user-attachments/assets/a6b43607-f09a-4973-a992-c86a5002bd68" />
+<img width="898" height="440" alt="Captura de pantalla 2026-11-24 191041" src="https://github.com/user-attachments/assets/c9b98acf-c979-4162-9683-7fa399b7e078" />
+<img width="893" height="449" alt="Captura de pantalla 2026-11-24 191001" src="https://github.com/user-attachments/assets/0da88624-c5a5-4d5f-8c95-52cee24f9b54" />
+<img width="314" height="352" alt="Captura de pantalla 2026-11-24 185911" src="https://github.com/user-attachments/assets/40006f2c-7762-4a6c-9f96-3646f75d2192" />
 
-<img width="937" height="451" alt="image" src="https://github.com/user-attachments/assets/33c07459-de11-4cd8-9979-514b45457cec" />
-
-<img width="950" height="453" alt="image" src="https://github.com/user-attachments/assets/1267e7d1-f8d7-4e78-ac7c-c91e693b86ca" />
 
 
 
